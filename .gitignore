@@ -1,8 +1,3 @@
 # Created by .ignore support plugin (hsz.mobi)
 .idea/
-.idea/.name
-.idea/templateLanguages.xml
-.idea/uiDesigner.xml
-.idea/workspace-DESKTOP-V9P1K0P.xml
-.idea/workspace.xml
-DependableSystems.iml
+target/
