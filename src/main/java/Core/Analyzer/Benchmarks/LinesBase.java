@@ -1,8 +1,8 @@
 package Core.Analyzer.Benchmarks;
 
 import Core.Analyzer.IBenchmark;
+import Core.Entry;
 import Core.Parser.Models.File;
-import Core.Report;
 
 public abstract class LinesBase implements IBenchmark {
     @Override
@@ -10,5 +10,5 @@ public abstract class LinesBase implements IBenchmark {
         return Types.Lines;
     }
 
-    public abstract Report.Entry[] run(File model);
+    public abstract Entry[] run(File model);
 }

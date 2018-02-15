@@ -36,6 +36,9 @@ public class LineParser {
             }
             _current += c;
         }
+        if (!_current.equals("")){
+            _words.add(_current);
+        }
         consolidateWords();
         return _words.toArray(new String[_words.size()]);
     }
@@ -82,7 +85,7 @@ public class LineParser {
         consolidated.removeAll(Collections.singleton(""));
         consolidated.removeAll(Collections.singleton(null));
         consolidated = consolidatePair(consolidated, new String[]{"-","+","*","/"},
-                                                     new String[]{"=", "/"});
+                                                     new String[]{"=", "/", "*"});
         consolidated = consolidatePair(consolidated, new String[]{"[", "{", "<"},
                                                      new String[]{"]", "}", ">"}, true);
 
@@ -93,7 +96,7 @@ public class LineParser {
         List<String> cons = new ArrayList<>();
         for (int i = 0; i < words.size(); i++){
             String val = words.get(i);
-            if (contains(starts, val)){
+            if (contains(starts, val) && i+1 < words.size()){
                 String next = words.get(i+1);
                 if (contains(ends, next)){
                     cons.add(val+next);
@@ -112,7 +115,10 @@ public class LineParser {
         for (int i = 0; i < words.size(); i++){
             String val = words.get(i);
             if (contains(starts, val)){
-                if (i+1 >= words.size()) continue;
+                if (i+1 >= words.size()) {
+                    cons.add(val);
+                    continue;
+                }
                 String next = words.get(i+1);
                 if (contains(ends, next)){
                     String prev = cons.get(cons.size()-1);

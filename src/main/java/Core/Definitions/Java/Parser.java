@@ -23,9 +23,11 @@ public class Parser implements IParser {
 
     private int _line = 0;
     private String[] _body;
+    private int _scopeopen = 0;
+    private int _scopeClose = 0;
+    private int _scopeLevel = 0;
 
     private List<String> _commentBuffer;
-
 
 
     @Override
@@ -57,49 +59,50 @@ public class Parser implements IParser {
                 continue;
             }
             if (line[0].startsWith("//") || line[0].startsWith("/*")){
-                parseComment(line[0]);
+                _commentBuffer.addAll(Arrays.asList(parseComment(line[0])));
             }
         }
         return file;
     }
 
     private Class parseClass(String[] currentLine) {
+        _scopeLevel+=1;
         Class cl = new Class();
         String[] cleanedLine = Helper.remove(currentLine, _modifiers);
         cl.Type = cleanedLine[0];
         cl.Name(cleanedLine[1]);
         cl.Comments(getComments());
         List<String> body = new ArrayList<>();
-        int bracketCount = 0;
         if (Helper.contains(cleanedLine, "{")){
-            bracketCount = 1;
+            _scopeopen++;
         }
         for (_line += 1; _line < _body.length; _line++){
             String[] line = LineParser.parse(_body[_line]);
             if (line.length <= 0) continue;
-            if (Helper.contains(line, "{")) bracketCount += 1;
             if (Helper.contains(line, "}")){
-                bracketCount += 1;
-                if (bracketCount%2 == 0) break;
+                _scopeClose++;
+                if (_scopeopen == _scopeClose) break;
             }
             body.add(_body[_line]);
             Class.ContentTypes type = determineClassContent(line);
             if (type == null) {
                 continue;
             }
-            if (type == Class.ContentTypes.Comment) parseComment(line[0]);
+            if (type == Class.ContentTypes.Comment) _commentBuffer.addAll(Arrays.asList(parseComment(line[0]))) ;
             if (type == Class.ContentTypes.Method) cl.add(parseMethod(line));
             if (type == Class.ContentTypes.Object) parseClass(line);
             if (type == Class.ContentTypes.Field) cl.add(parseField(line));
         }
         cl.Body(body.toArray(new String[body.size()]));
+        _scopeLevel -=1;
         return cl;
     }
 
     private Field parseField(String[] line) {
         Field field = new Field();
         field.Comments(getComments());
-        field.Body(line.clone());
+        List<String> body = new ArrayList<>();
+        line = LineParser.mergeGenerics(line);
         if (Helper.contains(Arrays.copyOfRange(_modifiers, 0, 2), line[0])) {
             field.Accessibility = line[0];
         }
@@ -109,9 +112,12 @@ public class Parser implements IParser {
         line = Helper.remove(line, _modifiers);
         field.Type = line[0];
         field.Name(line[1]);
-        if (Helper.contains(line, "{")){
-
+        for(; _line < _body.length; _line++){
+            line = LineParser.mergeGenerics(LineParser.parse(_body[_line]));
+            body.add(_body[_line]);
+            if (Helper.contains(line, ";"))break;
         }
+        field.Body(body.toArray(new String[body.size()]));
         return field;
     }
 
@@ -121,16 +127,14 @@ public class Parser implements IParser {
         line = Helper.remove(line, _modifiers);
         method.Type = line[0];
         method.Name(line[1]);
-        method.add(parseParameters(_body, _line));
+        method.add(parseParameters());
         List<String> body = new ArrayList<>();
-        int scopeCount = 0;
-        while (_line < _body.length){
-            _line++;
+        for (_line+=1;_line < _body.length; _line++){
             String[] current = LineParser.parse(_body[_line]);
-            if (Helper.contains(current, "{")) scopeCount++;
+            if (Helper.contains(current, "{")) _scopeopen++;
             if (Helper.contains(current, "}")){
-                scopeCount++;
-                if (scopeCount%2 == 1) break;
+                _scopeClose++;
+                if (_scopeopen - _scopeClose == _scopeLevel) break;
             }
             body.add(_body[_line]);
         }
@@ -138,23 +142,32 @@ public class Parser implements IParser {
         return method;
     }
 
-    public Parameter[] parseParameters(String[] body, int li) {
-        String[] line = LineParser.mergeGenerics(LineParser.parse(body[li]));
+    public Parameter[] parseParameters() {
         List<Parameter> params = new ArrayList<>();
-        int parenthasies = 1;
-        boolean closed;
-        for (int i = Helper.find(line, "(")+1; i < line.length;i++){
-            if (line[i].equals(",")) continue;
-            if (line[i].equals("(")) parenthasies+=1;
-            if (line[i].equals(")")){
-                parenthasies+=1;
-                if (parenthasies%2 == 0) break;
+        boolean closed = false;
+        while (!closed){
+            String[] line = LineParser.mergeGenerics(LineParser.parse(_body[_line]));
+            for (int i = Helper.find(line, "("); i < line.length; i++) {
+                if (line[i].equals(",")) continue;
+                if (line[i].equals("(")) {
+                    _scopeopen++;
+                    continue;}
+                if (line[i].equals(")")) {
+                    _scopeClose++;
+                    if (_scopeopen - _scopeClose == _scopeLevel) {
+                        closed = true;
+                        break;
+                    }
+                }
+                Parameter param = new Parameter();
+                param.Type = line[i];
+                param.Name(line[i + 1]);
+                params.add(param);
+                i += 1;
             }
-            Parameter param = new Parameter();
-            param.Type = line[i];
-            param.Name(line[i+1]);
-            params.add(param);
-            i+=1;
+            if (line[line.length-1].equals("{")) _scopeopen++;
+            if (closed) break;
+            _line++;
         }
         return params.toArray(new Parameter[params.size()]);
     }
@@ -180,7 +193,8 @@ public class Parser implements IParser {
         do{
             res.add(_body[_line]);
             current = LineParser.parse(_body[_line]);
-        }while (Helper.contains(current, "*/"));
+            _line++;
+        }while (!Helper.contains(current, "*/"));
         return res.toArray(new String[res.size()]);
     }
 

@@ -20,19 +20,5 @@ public class Report {
     public void add(Entry[] entries){
         Collections.addAll(Entries, entries);
     }
-    // Represents the model for analyze report entry.
-    public class Entry{
-        public final String Name;
-        public final String[] Path;
-        public final Types Type;
-        public final int Value;
-
-        public Entry(String name, String[] path, Types type, int value){
-            Name = name;
-            Path = path;
-            Type = type;
-            Value = value;
-        }
-    }
 
 }

@@ -49,6 +49,18 @@ public class Method implements IObject {
     }
 
     @Override
+    public String FullName() {
+        String fullName = _name + "(";
+        for (Parameter p :_parameters) {
+            fullName += p.Type + ", ";
+        }
+        if (fullName.endsWith(", ")){
+            fullName = fullName.substring(0, fullName.length()-2);
+        }
+        return fullName +")";
+    }
+
+    @Override
     public String[] Body() {
         return _body;
     }

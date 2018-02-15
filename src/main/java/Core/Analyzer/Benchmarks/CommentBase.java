@@ -1,8 +1,8 @@
 package Core.Analyzer.Benchmarks;
 
 import Core.Analyzer.IBenchmark;
+import Core.Entry;
 import Core.Parser.Models.File;
-import Core.Report;
 
 public abstract class CommentBase implements IBenchmark {
 
@@ -11,5 +11,5 @@ public abstract class CommentBase implements IBenchmark {
         return Types.Comment;
     }
 
-    public abstract Report.Entry[] run(File model);
+    public abstract Entry[] run(File model);
 }

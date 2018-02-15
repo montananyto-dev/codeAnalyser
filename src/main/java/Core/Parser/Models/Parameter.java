@@ -27,6 +27,11 @@ public class Parameter implements IObject {
     }
 
     @Override
+    public String FullName() {
+        return _name;
+    }
+
+    @Override
     public String[] Body() {
         return new String[0];
     }

@@ -33,6 +33,13 @@ public class ProcessManager {
         return def.Analyzer().analyze(model);
     }
 
+    public Report process(String[] rawText, String filename) throws DefinitionNotFoundException, NotSupportedException {
+        IDefinition def = findDefinition(SupportedLanguages.Java);
+        File model = def.Parser().parse(rawText);
+        model.Name(filename);
+        return def.Analyzer().analyze(model);
+    }
+
     // Used to add analyze definition at runtime. only use this if we need to dynamically add analyze definition.
     public void addDefintion(IDefinition definition){
         _definitions.putIfAbsent(definition.Language(), definition);

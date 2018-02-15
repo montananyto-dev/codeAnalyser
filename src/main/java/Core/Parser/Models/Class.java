@@ -49,6 +49,11 @@ public class Class implements IObject {
     }
 
     @Override
+    public String FullName() {
+        return  _name;
+    }
+
+    @Override
     public String[] Body() {
         return _body;
     }
