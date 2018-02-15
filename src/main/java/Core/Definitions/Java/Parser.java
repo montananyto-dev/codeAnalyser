@@ -68,7 +68,7 @@ public class Parser implements IParser {
         String[] cleanedLine = Helper.remove(currentLine, _modifiers);
         cl.Type = cleanedLine[0];
         cl.Name(cleanedLine[1]);
-        cl.Comments = getComments();
+        cl.Comments(getComments());
         List<String> body = new ArrayList<>();
         int bracketCount = 0;
         if (Helper.contains(cleanedLine, "{")){
@@ -98,8 +98,8 @@ public class Parser implements IParser {
 
     private Field parseField(String[] line) {
         Field field = new Field();
-        field.Comments = getComments();
-        field.Body = line.clone();
+        field.Comments(getComments());
+        field.Body(line.clone());
         if (Helper.contains(Arrays.copyOfRange(_modifiers, 0, 2), line[0])) {
             field.Accessibility = line[0];
         }
@@ -108,7 +108,7 @@ public class Parser implements IParser {
         }
         line = Helper.remove(line, _modifiers);
         field.Type = line[0];
-        field.Name = line[1];
+        field.Name(line[1]);
         if (Helper.contains(line, "{")){
 
         }
@@ -117,11 +117,11 @@ public class Parser implements IParser {
 
     private Method parseMethod(String[] line) {
         Method method = new Method();
-        method.Comments = getComments();
+        method.Comments(getComments());
         line = Helper.remove(line, _modifiers);
         method.Type = line[0];
-        method.Name = line[1];
-        method.Parameters = parseParameters(_body, _line);
+        method.Name(line[1]);
+        method.add(parseParameters(_body, _line));
         List<String> body = new ArrayList<>();
         int scopeCount = 0;
         while (_line < _body.length){
@@ -134,11 +134,11 @@ public class Parser implements IParser {
             }
             body.add(_body[_line]);
         }
-        method.Body = body.toArray(new String[body.size()]);
+        method.Body(body.toArray(new String[body.size()]));
         return method;
     }
 
-    public List<Parameter> parseParameters(String[] body, int li) {
+    public Parameter[] parseParameters(String[] body, int li) {
         String[] line = LineParser.mergeGenerics(LineParser.parse(body[li]));
         List<Parameter> params = new ArrayList<>();
         int parenthasies = 1;
@@ -152,11 +152,11 @@ public class Parser implements IParser {
             }
             Parameter param = new Parameter();
             param.Type = line[i];
-            param.Name = line[i+1];
+            param.Name(line[i+1]);
             params.add(param);
             i+=1;
         }
-        return params;
+        return params.toArray(new Parameter[params.size()]);
     }
 
 

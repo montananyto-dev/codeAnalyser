@@ -10,16 +10,16 @@ public class Class implements IObject {
     public List<Field> Fields = new ArrayList<>();
     public List<Method> Methods = new ArrayList<>();
     public List<Class> Classes = new ArrayList<>();
-    public String[] Comments;
+    private String[] _comments;
     private String[] _body;
 
     public void add(Field field){
-        field.Parent = this;
+        field.Parent(this);
         Fields.add(field);
     }
 
     public void add(Method method){
-        method.Parent = this;
+        method.Parent(this);
         Methods.add(method);
     }
 
@@ -44,8 +44,8 @@ public class Class implements IObject {
     }
 
     @Override
-    public void Name(String value) {
-        _name = value;
+    public void Name(String name) {
+        _name = name;
     }
 
     @Override
@@ -56,6 +56,16 @@ public class Class implements IObject {
     @Override
     public void Body(String[] body) {
         _body = body;
+    }
+
+    @Override
+    public String[] Comments() {
+        return _comments;
+    }
+
+    @Override
+    public void Comments(String[] comments) {
+        _comments = comments;
     }
 
     public enum ContentTypes {

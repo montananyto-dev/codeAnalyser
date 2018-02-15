@@ -13,7 +13,8 @@ public class File implements IObject {
 
     private IObject _parent;
     private String _name;
-    private String[] _body;
+    private String[] _body = {};
+    private String[] _comments = {};
 
     public void add(Class obj){
         obj.Parent(this);
@@ -36,8 +37,8 @@ public class File implements IObject {
     }
 
     @Override
-    public void Name(String value) {
-        _name = value;
+    public void Name(String name) {
+        _name = name;
     }
 
     @Override
@@ -48,5 +49,15 @@ public class File implements IObject {
     @Override
     public void Body(String[] body) {
         _body = body;
+    }
+
+    @Override
+    public String[] Comments() {
+        return _comments;
+    }
+
+    @Override
+    public void Comments(String[] comments) {
+        _comments = comments;
     }
 }
