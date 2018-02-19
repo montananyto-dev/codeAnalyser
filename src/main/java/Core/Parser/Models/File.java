@@ -65,4 +65,11 @@ public class File implements IObject {
     public void Comments(String[] comments) {
         _comments = comments;
     }
+
+    public enum ContentTypes {
+        Package,
+        Import,
+        Object,
+        Comment
+    }
 }

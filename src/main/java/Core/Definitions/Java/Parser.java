@@ -20,6 +20,8 @@ public class Parser implements IParser {
     private String[] _imports = {"import"};
     private String[] _package = {"package"};
     private String[] _comment = {"//", "/*"};
+    private String[] _scopeOpens = {"{", "("};
+    private String[] _scopeCloses = {"}", ")"};
 
     private int _line = 0;
     private String[] _body;
@@ -46,20 +48,21 @@ public class Parser implements IParser {
         for (; _line < _body.length; _line++){
             String[] line = LineParser.parse(_body[_line]);
             if (line.length <= 0) continue;
-            if (Helper.contains(line, _imports)) {
-                file.ExternalLibraries.add(parseImport(line));
-                continue;
-            }
-            if (Helper.contains(line, _package)){
-                file.Package = parsePackage(line);
-                continue;
-            }
-            if (Helper.contains(line, _objects)){
-                file.add(parseClass(line));
-                continue;
-            }
-            if (line[0].startsWith("//") || line[0].startsWith("/*")){
-                _commentBuffer.addAll(Arrays.asList(parseComment(line[0])));
+            File.ContentTypes type = determineFileContent(line);
+            if (type == null) continue;
+            switch (type){
+                case Import:
+                    file.ExternalLibraries.add(parseImport(line));
+                    break;
+                case Package:
+                    file.Package = parsePackage(line);
+                    break;
+                case Object:
+                    file.add(parseClass(line));
+                    break;
+                case Comment:
+                    _commentBuffer.addAll(Arrays.asList(parseComment(line[0])));
+                    break;
             }
         }
         return file;
@@ -113,7 +116,7 @@ public class Parser implements IParser {
         field.Type = line[0];
         field.Name(line[1]);
         for(; _line < _body.length; _line++){
-            line = LineParser.mergeGenerics(LineParser.parse(_body[_line]));
+            line = LineParser.parse(_body[_line]);
             body.add(_body[_line]);
             if (Helper.contains(line, ";"))break;
         }
@@ -131,10 +134,8 @@ public class Parser implements IParser {
         List<String> body = new ArrayList<>();
         for (_line+=1;_line < _body.length; _line++){
             String[] current = LineParser.parse(_body[_line]);
-            if (Helper.contains(current, "{")) _scopeopen++;
-            if (Helper.contains(current, "}")){
-                _scopeClose++;
-                if (_scopeopen - _scopeClose == _scopeLevel) break;
+            if (checkIterateScope(current)){
+                if (checkScopeEnded()) break;
             }
             body.add(_body[_line]);
         }
@@ -142,22 +143,19 @@ public class Parser implements IParser {
         return method;
     }
 
-    public Parameter[] parseParameters() {
+    private Parameter[] parseParameters() {
         List<Parameter> params = new ArrayList<>();
         boolean closed = false;
         while (!closed){
             String[] line = LineParser.mergeGenerics(LineParser.parse(_body[_line]));
             for (int i = Helper.find(line, "("); i < line.length; i++) {
                 if (line[i].equals(",")) continue;
-                if (line[i].equals("(")) {
-                    _scopeopen++;
-                    continue;}
-                if (line[i].equals(")")) {
-                    _scopeClose++;
-                    if (_scopeopen - _scopeClose == _scopeLevel) {
+                if (checkIterateScope(line[i])){
+                    if (checkScopeEnded()){
                         closed = true;
                         break;
                     }
+                    continue;
                 }
                 Parameter param = new Parameter();
                 param.Type = line[i];
@@ -172,8 +170,32 @@ public class Parser implements IParser {
         return params.toArray(new Parameter[params.size()]);
     }
 
+    private boolean checkIterateScope(String word){
+        if (Helper.contains(_scopeOpens, word)) {
+            _scopeopen++;
+            return true;
+        }
+        if (Helper.contains(_scopeCloses, word)) {
+            _scopeClose++;
+            return true;
+        }
+        return false;
+    }
 
-    public Class.ContentTypes determineClassContent(String[] line){
+    private boolean checkIterateScope(String[] line){
+        boolean res = false;
+        for (String word: line){
+            if (checkIterateScope(word)) res = true;
+        }
+        return res;
+    }
+
+
+    private boolean checkScopeEnded(){
+        return _scopeopen - _scopeClose == _scopeLevel;
+    }
+
+    private Class.ContentTypes determineClassContent(String[] line){
         line = Helper.remove(line, _modifiers);
         String[] reduced = LineParser.eliminateGenerics(line);
         if (reduced[0].startsWith("//") || reduced[0].startsWith("/*")) return Class.ContentTypes.Comment;
@@ -181,6 +203,14 @@ public class Parser implements IParser {
         if (reduced.length < 3) return null;
         if (reduced[2].equals(";") || reduced[2].equals("=")) return Class.ContentTypes.Field;
         if (reduced[2].equals("(")) return Class.ContentTypes.Method;
+        return null;
+    }
+
+    private File.ContentTypes determineFileContent(String[] line){
+        if (Helper.contains(_imports, line[0])) return File.ContentTypes.Import;
+        if (Helper.contains(_package, line[0])) return File.ContentTypes.Package;
+        if (Helper.contains(_objects, line)) return File.ContentTypes.Object;
+        if (Helper.contains(_comment, line[0])) return File.ContentTypes.Comment;
         return null;
     }
 
