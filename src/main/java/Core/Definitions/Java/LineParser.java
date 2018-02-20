@@ -25,7 +25,7 @@ public class LineParser {
         boolean insideString = false;
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
-            if (c == '"' && !_words.get(_words.size()-1).equals("/")){
+            if (c == '"' && !_words.get(_words.size()-1).equals("\\")){
                 insideString = !insideString;
             }
             if (!insideString) {
