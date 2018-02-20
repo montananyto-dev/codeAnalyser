@@ -91,9 +91,9 @@ public class Parser implements IParser {
             if (type == null) {
                 continue;
             }
-            if (type == Class.ContentTypes.Comment) _commentBuffer.addAll(Arrays.asList(parseComment(line[0]))) ;
-            if (type == Class.ContentTypes.Method) cl.add(parseMethod(line));
-            if (type == Class.ContentTypes.Object) parseClass(line);
+            if (type == Class.ContentTypes.Comment){ _commentBuffer.addAll(Arrays.asList(parseComment(line[0]))); continue;}
+            if (type == Class.ContentTypes.Method){ cl.add(parseMethod(line)); continue;}
+            if (type == Class.ContentTypes.Object){ cl.add(parseClass(line)); continue;}
             if (type == Class.ContentTypes.Field) cl.add(parseField(line));
         }
         cl.Body(body.toArray(new String[body.size()]));
@@ -189,7 +189,6 @@ public class Parser implements IParser {
         }
         return res;
     }
-
 
     private boolean checkScopeEnded(){
         return _scopeopen - _scopeClose == _scopeLevel;

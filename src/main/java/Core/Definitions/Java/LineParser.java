@@ -1,6 +1,7 @@
 package Core.Definitions.Java;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -12,7 +13,8 @@ public class LineParser {
                                         '[',']',
                                         '<','>',
                                         '=','+','-','*','/',
-                                        ';',','};
+                                        ';',',',
+                                         '"','\''};
 
     public LineParser(char[] delimiters){
         _delimiters = delimiters;
@@ -43,6 +45,29 @@ public class LineParser {
         return _words.toArray(new String[_words.size()]);
     }
 
+    public static String[] mergeScope(String[] line, String open, String close){
+        List<String> result = new ArrayList<>();
+        boolean isMerging = false;
+        String value = "";
+        for (String aLine : line) {
+            if (aLine.equals(open)) {
+                isMerging = true;
+                value = "";
+            }
+            if (isMerging) {
+                value += aLine;
+            }
+            else {
+                result.add(aLine);
+            }
+            if (aLine.equals(close)) {
+                isMerging = false;
+                result.set(result.size()-1, result.get(result.size()-1)+value);
+            }
+        }
+        return result.toArray(new String[result.size()]);
+    }
+
     public static String[] eliminateGenerics(String[] line){
         List<String> result = new ArrayList<>();
         boolean skip = false;
@@ -58,30 +83,11 @@ public class LineParser {
     }
 
     public static String[] mergeGenerics(String[] line){
-        List<String> result = new ArrayList<>();
-        boolean isMerging = false;
-        String value = "";
-        for (String aLine : line) {
-            if (aLine.equals("<")) {
-                isMerging = true;
-                value = "";
-            }
-            if (isMerging) {
-                value += aLine;
-            }
-            else {
-                result.add(aLine);
-            }
-            if (aLine.equals(">")) {
-                isMerging = false;
-                result.set(result.size()-1, result.get(result.size()-1)+value);
-            }
-        }
-        return result.toArray(new String[result.size()]);
+        return mergeScope(line, "<", ">");
     }
 
     private static void consolidateWords(){
-        List<String> consolidated = new ArrayList<>(_words);
+        List<String> consolidated = new ArrayList<>(Arrays.asList(mergeScope(_words.toArray(new String[_words.size()]), "\"", "\"")));
         consolidated.removeAll(Collections.singleton(""));
         consolidated.removeAll(Collections.singleton(null));
         consolidated = consolidatePair(consolidated, new String[]{"-","+","*","/"},
