@@ -13,8 +13,7 @@ public class LineParser {
                                         '[',']',
                                         '<','>',
                                         '=','+','-','*','/',
-                                        ';',',',
-                                         '"','\''};
+                                        ';',','};
 
     public LineParser(char[] delimiters){
         _delimiters = delimiters;
@@ -23,18 +22,24 @@ public class LineParser {
     public static String[] parse(String line) {
         _current = "";
         _words = new ArrayList<>();
+        boolean insideString = false;
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
-            if (c == ' '){
-                _words.add(_current);
-                _current = "";
-                continue;
+            if (c == '"' && !_words.get(_words.size()-1).equals("/")){
+                insideString = !insideString;
             }
-            if (isDelimiter(c)){
-                _words.add(_current);
-                _words.add(""+c);
-                _current = "";
-                continue;
+            if (!insideString) {
+                if (c == ' ') {
+                    _words.add(_current);
+                    _current = "";
+                    continue;
+                }
+                if (isDelimiter(c)) {
+                    _words.add(_current);
+                    _words.add("" + c);
+                    _current = "";
+                    continue;
+                }
             }
             _current += c;
         }
@@ -87,7 +92,7 @@ public class LineParser {
     }
 
     private static void consolidateWords(){
-        List<String> consolidated = new ArrayList<>(Arrays.asList(mergeScope(_words.toArray(new String[_words.size()]), "\"", "\"")));
+        List<String> consolidated = new ArrayList<>(_words);
         consolidated.removeAll(Collections.singleton(""));
         consolidated.removeAll(Collections.singleton(null));
         consolidated = consolidatePair(consolidated, new String[]{"-","+","*","/"},
