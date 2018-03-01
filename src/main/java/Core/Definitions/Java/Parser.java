@@ -31,6 +31,8 @@ public class Parser implements IParser {
 
     private List<String> _commentBuffer;
 
+    public static final LineParser LineParser = new LineParser();
+
 
     @Override
     public File parse(String[] rawText) {
@@ -241,5 +243,19 @@ public class Parser implements IParser {
         return com;
     }
 
+    public static class LineParser extends Core.Parser.LineParser {
 
+        protected LineParser() {
+            _delimiters = new char[] {'(',')', '{','}', '[',']', '<','>',
+                                      '=','+','-','*','/',
+                                      ';',',',
+                                      '&','|','%'};
+            _consolidationProfiles.add(new ConsolidationProfile(new String[]{"-","+","*","/", "&", "|", "%"},
+                                                                new String[]{"=", "/", "*", "&", "|"},
+                                                                false));
+            _consolidationProfiles.add(new ConsolidationProfile(new String[]{"[", "{", "<"},
+                                                                new String[]{"]", "}", ">"},
+                                                                true));
+        }
+    }
 }

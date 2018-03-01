@@ -1,26 +1,18 @@
-package Core.Definitions.Java;
+package Core.Parser;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class LineParser {
-    private static List<String> _words;
-    private static String _current;
-    private static char[] _delimiters = {'(',')',
-                                         '{','}',
-                                         '[',']',
-                                         '<','>',
-                                         '=','+','-','*','/',
-                                         ';',',',
-                                         '&','|'};
 
-    public LineParser(char[] delimiters){
-        _delimiters = delimiters;
-    }
+    private List<String> _words;
+    private String _current;
+    protected char[] _delimiters;
 
-    public static String[] parse(String line) {
+    protected List<ConsolidationProfile> _consolidationProfiles = new ArrayList<>();
+
+    public String[] parse(String line) {
         _current = "";
         _words = new ArrayList<>();
         boolean insideString = false;
@@ -51,7 +43,7 @@ public class LineParser {
         return _words.toArray(new String[_words.size()]);
     }
 
-    public static String[] mergeScope(String[] line, String open, String close){
+    public String[] mergeScope(String[] line, String open, String close){
         List<String> result = new ArrayList<>();
         boolean isMerging = false;
         String value = "";
@@ -74,7 +66,7 @@ public class LineParser {
         return result.toArray(new String[result.size()]);
     }
 
-    public static String[] eliminateGenerics(String[] line){
+    public String[] eliminateGenerics(String[] line){
         List<String> result = new ArrayList<>();
         boolean skip = false;
         for (int i = 0; i < line.length; i++){
@@ -88,23 +80,21 @@ public class LineParser {
         return result.toArray(new String[result.size()]);
     }
 
-    public static String[] mergeGenerics(String[] line){
+    public String[] mergeGenerics(String[] line){
         return mergeScope(line, "<", ">");
     }
 
-    private static void consolidateWords(){
+    private void consolidateWords(){
         List<String> consolidated = new ArrayList<>(_words);
         consolidated.removeAll(Collections.singleton(""));
         consolidated.removeAll(Collections.singleton(null));
-        consolidated = consolidatePair(consolidated, new String[]{"-","+","*","/", "&", "|"},
-                                                     new String[]{"=", "/", "*", "&", "|"});
-        consolidated = consolidatePair(consolidated, new String[]{"[", "{", "<"},
-                                                     new String[]{"]", "}", ">"}, true);
-
+        for (ConsolidationProfile profile : _consolidationProfiles){
+            consolidated = consolidatePair(consolidated, profile.Start, profile.End, profile.MergeWithPrevious);
+        }
         _words = consolidated;
     }
 
-    private static List<String> consolidatePair(List<String> words, String[] starts, String[] ends){
+    private List<String> consolidatePair(List<String> words, String[] starts, String[] ends){
         List<String> cons = new ArrayList<>();
         for (int i = 0; i < words.size(); i++){
             String val = words.get(i);
@@ -121,7 +111,7 @@ public class LineParser {
         return cons;
     }
 
-    private static List<String> consolidatePair(List<String> words, String[] starts, String[] ends, boolean mergeWithPervious){
+    private List<String> consolidatePair(List<String> words, String[] starts, String[] ends, boolean mergeWithPervious){
         if (!mergeWithPervious) return consolidatePair(words, starts, ends);
         List<String> cons = new ArrayList<>();
         for (int i = 0; i < words.size(); i++){
@@ -144,7 +134,7 @@ public class LineParser {
         return cons;
     }
 
-    private static boolean contains(String[] list, String value){
+    private boolean contains(String[] list, String value){
         for (String str:list) {
             if (str.equals(value)) return true;
         }
@@ -152,10 +142,22 @@ public class LineParser {
     }
 
 
-    private static boolean isDelimiter(char c){
+    private boolean isDelimiter(char c){
         for(int i = 0; i < _delimiters.length; i++){
             if (_delimiters[i] == c) return true;
         }
         return false;
+    }
+
+    protected class ConsolidationProfile{
+        public final String[] Start;
+        public final String[] End;
+        public final boolean MergeWithPrevious;
+
+        public ConsolidationProfile(String[] start, String[] end, boolean mergeWithPrevious){
+            Start = start;
+            End = end;
+            MergeWithPrevious = mergeWithPrevious;
+        }
     }
 }
