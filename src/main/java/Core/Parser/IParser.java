@@ -15,6 +15,6 @@ public interface IParser {
         Class,
         Field,
         Method,
-        None;
+        None
     }
 }

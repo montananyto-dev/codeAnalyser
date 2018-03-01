@@ -6,7 +6,6 @@ import Core.Parser.Models.File;
 
 public abstract class CommentBase implements IBenchmark {
 
-    @Override
     public Types Type() {
         return Types.Comment;
     }

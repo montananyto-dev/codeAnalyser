@@ -4,16 +4,13 @@ import Core.Definitions.SupportedLanguages;
 import Core.Entry;
 import Core.Exceptions.DefinitionNotFoundException;
 import Core.Exceptions.NotSupportedException;
-import Core.Parser.Models.Class;
 import Core.Parser.Models.File;
-import Core.Parser.Models.Parameter;
 import Core.ProcessManager;
 import Core.Report;
 import com.sun.deploy.util.StringUtils;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static java.lang.System.out;
 
@@ -91,7 +88,7 @@ public class ParserTest {
                try {
             Report report = manager.process(_body, "file1.java", SupportedLanguages.Java);
             for (Entry e : report.Entries) {
-                out.println(StringUtils.join(Arrays.asList(e.Path), ".") + ":" + e.Name + ": " + e.Type.name() + ":" + e.Value);
+                out.println(StringUtils.join(Arrays.asList(e.Path), ".") + ":" + e.Name + ": " + e.Type.name() + ":" + e.Values);
             }
             assert true;
         } catch (DefinitionNotFoundException e) {

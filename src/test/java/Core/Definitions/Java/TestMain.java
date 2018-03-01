@@ -1,12 +1,9 @@
 package Core.Definitions.Java;
 
-import Core.Definitions.Java.Benchmarks.Lines;
 import Core.Definitions.SupportedLanguages;
 import Core.Entry;
 import Core.Exceptions.DefinitionNotFoundException;
 import Core.Exceptions.NotSupportedException;
-import Core.Parser.IParser;
-import Core.Parser.Models.File;
 import Core.ProcessManager;
 import Core.Report;
 import com.sun.deploy.util.StringUtils;
@@ -83,7 +80,7 @@ public class TestMain {
         try {
             Report report = manager.process(_body, javaFileName, SupportedLanguages.Java);
             for (Entry e : report.Entries) {
-                out.println(StringUtils.join(Arrays.asList(e.Path), ".") + ":" + e.Name + ": " + e.Type.name() + ":" + e.Value);
+                out.println(StringUtils.join(Arrays.asList(e.Path), ".") + ":" + e.Name + ": " + e.Type.name() + ":" + e.Values);
             }
             assert true;
         } catch (DefinitionNotFoundException e) {

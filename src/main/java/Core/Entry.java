@@ -3,12 +3,15 @@ package Core;
 import Core.Analyzer.Benchmarks.Types;
 import Core.Parser.Models.Object;
 
+import java.util.HashMap;
+import java.util.Map;
+
 // Represents the model for analyze report entry.
 public class Entry {
     public String Name;
     public String[] Path;
     public Types Type;
-    public int Value;
+    public Map<String, Number> Values = new HashMap<>();
 
     public Entry(){}
 
@@ -18,10 +21,24 @@ public class Entry {
         Type = type;
     }
 
-    public Entry(String name, String[] path, Types type, int value){
+    public Entry(Object obj, Types type, Number value){
+        Name = obj.FullName();
+        Path = obj.Path();
+        Type = type;
+        Values.put("value", value) ;
+    }
+
+    public Entry(Object obj, Types type, String valueName, Number value){
+        Name = obj.FullName();
+        Path = obj.Path();
+        Type = type;
+        Values.put(valueName, value);
+    }
+
+    public Entry(String name, String[] path, Types type, Number value){
         Name = name;
         Path = path;
         Type = type;
-        Value = value;
+        Values.put("value", value);
     }
 }

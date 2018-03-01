@@ -1,6 +1,7 @@
 package Core.Definitions.VisualBasic;
 
 import Core.Analyzer.Analyzer;
+import Core.Analyzer.Benchmarks.LinesBase;
 import Core.Analyzer.IAnalyzer;
 import Core.Analyzer.IBenchmark;
 import Core.Definitions.IDefinition;
@@ -8,8 +9,8 @@ import Core.Definitions.SupportedLanguages;
 import Core.Definitions.VisualBasic.Benchmarks.Comments;
 import Core.Definitions.VisualBasic.Benchmarks.Cyclomatic;
 import Core.Definitions.VisualBasic.Benchmarks.Halstead;
-import Core.Definitions.VisualBasic.Benchmarks.Lines;
 import Core.Parser.IParser;
+
 
 public class Definition implements IDefinition {
 
@@ -28,7 +29,7 @@ public class Definition implements IDefinition {
         return new Analyzer(new IBenchmark[]{new Comments(),
                                              new Cyclomatic(),
                                              new Halstead(),
-                                             new Lines()});
+                                             new LinesBase()});
     }
 
     @Override

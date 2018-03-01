@@ -62,7 +62,7 @@ public class Gui extends Application {
 
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) {
 
         this.window = primaryStage;
 
@@ -133,12 +133,13 @@ public class Gui extends Application {
     private void setReportValues(Report report){
         setCyclomaticComplexity(report);
         setNumberOfLines(report);
+        setHalstead(report);
     }
 
     private void setCyclomaticComplexity(Report report){
         int sum = 0;
         for (Entry e : report.Entries){
-            if (e.Type == Types.Cyclomatic) sum += e.Value;
+            if (e.Type == Types.Cyclomatic) sum += (int) e.Values.get("value");
         }
         LabelFieldFactory.LabelField lf = findLabelField("Cyclomatic");
         if (lf != null) lf.Field.setText(Integer.toString(sum));
@@ -148,7 +149,19 @@ public class Gui extends Application {
         for (Entry e : report.Entries){
             if (e.Type == Types.Lines){
                 LabelFieldFactory.LabelField lf = findLabelField("lines");
-                if (lf != null) lf.Field.setText(Integer.toString(e.Value));
+                if (lf != null) lf.Field.setText(e.Values.get("value").toString());
+                break;
+            }
+        }
+    }
+
+    private void setHalstead(Report report){
+        for (Entry e : report.Entries){
+            if (e.Type == Types.Halstead){
+                for(String key : e.Values.keySet()){
+                    LabelFieldFactory.LabelField lf = findLabelField(key);
+                    if (lf != null) lf.Field.setText(e.Values.get(key).toString());
+                }
                 break;
             }
         }
@@ -165,8 +178,6 @@ public class Gui extends Application {
         return textArea.getText().split("\n");
     }
 
-
-    // setup
     private void setTextArea(String[] lines){
         textArea.clear();
         for(String line : lines){
@@ -174,6 +185,7 @@ public class Gui extends Application {
         }
     }
 
+    // setup
     private void setupMainPane(Scene scene) {
         mainPane = new BorderPane();
         mainPane.setCenter(tabPane);
@@ -271,7 +283,8 @@ public class Gui extends Application {
 
     private void setupLabelFields(){
         String[] vals = {"Number of words", "Number of lines","Number of Classes","Number of Methods",
-                         "Number of Comments", "Halstead complexity", "Cyclomatic complexity"};
+                         "Number of Comments", "Cyclomatic complexity",
+                         "Halstead Volume","Halstead Difficulty","Halstead Effort","Halstead Time To Code","Halstead Delivered Bugs"};
         LabelFieldFactory lfFactory = new LabelFieldFactory(grid, 6,0, Color.WHITE);
         for(String s: vals){
             LabelFields.add(lfFactory.build(s));

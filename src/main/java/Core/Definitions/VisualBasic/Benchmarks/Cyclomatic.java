@@ -1,12 +1,16 @@
 package Core.Definitions.VisualBasic.Benchmarks;
 
-import Core.Entry;
-import Core.Parser.Models.File;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import Core.Parser.LineParser;
 
 public class Cyclomatic extends Core.Analyzer.Benchmarks.CyclomaticBase {
+
     @Override
-    public Entry[] run(File model) {
-        throw new NotImplementedException();
+    protected String[] setKeywords() {
+        return new String[0];
+    }
+
+    @Override
+    protected LineParser setLineParser() {
+        return null;
     }
 }

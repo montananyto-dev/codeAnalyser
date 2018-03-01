@@ -5,7 +5,6 @@ import Core.Entry;
 import Core.FileManager.Exceptions.FileNotValidException;
 import Core.FileManager.Exceptions.OutputDirectoryNotSetException;
 import Core.Report;
-import javafx.stage.DirectoryChooser;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -61,27 +60,25 @@ public class FileManager {
             val += e.Type.name() + ",";
             val += csvEncode(e.Name) + ",";
             val += csvEncode(e.Path) + ",";
-            val += e.Value + "\n";
+            val += e.Values + "\n";
             values.add(val);
         }
         return values.toArray(new String[values.size()]);
     }
 
-    public static Report decodeReport(String line){
+    private static Report decodeReport(String line){
         String[] values = decodeLine(line);
         Report result = new Report(values[0]);
         result.Timestamp = new Timestamp(Long.parseLong(values[1]));
         return result;
     }
 
-    public static Entry decodeEntry(String line){
-        Entry result = new Entry();
+    private static Entry decodeEntry(String line){
         String[] decoded = decodeLine(line);
-        result.Type = Types.find(decoded[0]);
-        result.Name = decoded[1];
-        result.Path = csvDecodeArray(decoded[2]);
-        result.Value = Integer.parseInt(decoded[3]);
-        return result;
+        return new Entry(decoded[1],
+                         csvDecodeArray(decoded[2]),
+                         Types.find(decoded[0]),
+                         Integer.parseInt(decoded[3]));
 
     }
 
