@@ -3,14 +3,9 @@ package Core.Parser.Models;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Method implements IObject {
+public class Method extends Object {
     public String Type;
-
-    private IObject _parent;
-    private String[] _comments;
-    private String _name;
     private List<Parameter> _parameters = new ArrayList<>();
-    private String[] _body = {};
 
     public void add(Parameter parameter){
         parameter.Parent(this);
@@ -29,28 +24,8 @@ public class Method implements IObject {
     }
 
     @Override
-    public IObject Parent() {
-        return _parent;
-    }
-
-    @Override
-    public void Parent(IObject parent) {
-        _parent = parent;
-    }
-
-    @Override
-    public String Name() {
-        return _name;
-    }
-
-    @Override
-    public void Name(String name) {
-        _name = name;
-    }
-
-    @Override
     public String FullName() {
-        String fullName = _name + "(";
+        String fullName = Name() + "(";
         for (Parameter p :_parameters) {
             fullName += p.Type + ", ";
         }
@@ -58,25 +33,5 @@ public class Method implements IObject {
             fullName = fullName.substring(0, fullName.length()-2);
         }
         return fullName +")";
-    }
-
-    @Override
-    public String[] Body() {
-        return _body;
-    }
-
-    @Override
-    public void Body(String[] body) {
-        _body = body;
-    }
-
-    @Override
-    public String[] Comments() {
-        return _comments;
-    }
-
-    @Override
-    public void Comments(String[] comments) {
-        _comments = comments;
     }
 }

@@ -9,11 +9,12 @@ public class LineParser {
     private static List<String> _words;
     private static String _current;
     private static char[] _delimiters = {'(',')',
-                                        '{','}',
-                                        '[',']',
-                                        '<','>',
-                                        '=','+','-','*','/',
-                                        ';',','};
+                                         '{','}',
+                                         '[',']',
+                                         '<','>',
+                                         '=','+','-','*','/',
+                                         ';',',',
+                                         '&','|'};
 
     public LineParser(char[] delimiters){
         _delimiters = delimiters;
@@ -95,8 +96,8 @@ public class LineParser {
         List<String> consolidated = new ArrayList<>(_words);
         consolidated.removeAll(Collections.singleton(""));
         consolidated.removeAll(Collections.singleton(null));
-        consolidated = consolidatePair(consolidated, new String[]{"-","+","*","/"},
-                                                     new String[]{"=", "/", "*"});
+        consolidated = consolidatePair(consolidated, new String[]{"-","+","*","/", "&", "|"},
+                                                     new String[]{"=", "/", "*", "&", "|"});
         consolidated = consolidatePair(consolidated, new String[]{"[", "{", "<"},
                                                      new String[]{"]", "}", ">"}, true);
 
