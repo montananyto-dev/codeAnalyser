@@ -3,6 +3,7 @@ package Core.Definitions.Java.Benchmarks;
 import Core.Entry;
 import Core.Parser.Models.Class;
 import Core.Parser.Models.File;
+import Core.Parser.Models.IObject;
 import Core.Parser.Models.Method;
 
 import java.util.ArrayList;
@@ -15,18 +16,18 @@ public class Lines extends Core.Analyzer.Benchmarks.LinesBase {
         List<Entry> entries = new ArrayList<>();
         for (Class c: model.Classes) {
             for (Method m : c.Methods){
-                entries.add(analyzeMethod(m));
+                entries.add(analyzeBody(m));
             }
         }
         return entries.toArray(new Entry[entries.size()]);
     }
 
-    private Entry analyzeMethod(Method method){
+    private Entry analyzeBody(IObject object){
         Entry entry = new Entry();
-        entry.Name = method.FullName();
+        entry.Name = object.FullName();
         entry.Type = this.Type();
-        entry.Path = method.Path();
-        entry.Value = method.Body().length;
+        entry.Path = object.Path();
+        entry.Value = object.Body().length;
         return entry;
     }
 }
