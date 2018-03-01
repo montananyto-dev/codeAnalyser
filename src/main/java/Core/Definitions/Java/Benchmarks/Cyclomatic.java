@@ -29,7 +29,7 @@ public class Cyclomatic extends Core.Analyzer.Benchmarks.CyclomaticBase {
 
     private Entry analyzeMethod(Method method){
         Entry entry = new Entry(method, this.Type());
-        entry.Value  = 0;
+        entry.Value = 1;
         for (String line : method.Body()){
             String[] words = LineParser.parse(line);
             for (String word : words){
