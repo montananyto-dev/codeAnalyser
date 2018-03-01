@@ -28,4 +28,9 @@ public class Definition implements IDefinition {
                                              new Halstead(),
                                              new Lines()});
     }
+
+    @Override
+    public String FileSignature() {
+        return ".java";
+    }
 }

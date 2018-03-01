@@ -1,13 +1,19 @@
 package Core;
 
 import Core.Definitions.IDefinition;
+import Core.Definitions.Manifest;
 import Core.Definitions.SupportedLanguages;
 import Core.Exceptions.DefinitionNotFoundException;
 import Core.Exceptions.NotSupportedException;
 import Core.FileManager.FileManager;
 import Core.Parser.Models.File;
+import com.sun.corba.se.spi.ior.IdentifiableContainerBase;
+import org.omg.CORBA.PUBLIC_MEMBER;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -27,14 +33,15 @@ public class ProcessManager {
     }
 
     // Used to process analyze file handle.
-    public Report process(java.io.File file) throws DefinitionNotFoundException, NotSupportedException {
-        IDefinition def = findDefinition(FileManager.DetermineLanguage(file));
+    public Report process(java.io.File file) throws NotSupportedException, IOException {
+        IDefinition def = findDefinition(file);
         File model = def.Parser().parse(FileManager.read(file));
+        model.Name(file.getName());
         return def.Analyzer().analyze(model);
     }
 
-    public Report process(String[] rawText, String filename) throws DefinitionNotFoundException, NotSupportedException {
-        IDefinition def = findDefinition(SupportedLanguages.Java);
+    public Report process(String[] rawText, String filename, SupportedLanguages language) throws DefinitionNotFoundException, NotSupportedException {
+        IDefinition def = findDefinition(language);
         File model = def.Parser().parse(rawText);
         model.Name(filename);
         return def.Analyzer().analyze(model);
@@ -45,11 +52,28 @@ public class ProcessManager {
         _definitions.putIfAbsent(definition.Language(), definition);
     }
 
+    public SupportedLanguages determineLanguage(java.io.File file){
+        try {
+            return findDefinition(file).Language();
+        } catch (NotSupportedException e) {
+            return SupportedLanguages.NOTSUPPORTED;
+        }
+    }
+
+    public String[] getSupportedTypeNames(){
+        List<String> names = new ArrayList<>();
+        for(IDefinition def : _definitions.values()){
+           names.add(def.Language().name());
+        }
+        return names.toArray(new String[names.size()]);
+    }
+
     // Used to load the definitions into the process manager.
     // Should only be called in the constructor.
     private void loadDefaultDefinitions(){
-        _definitions.put(SupportedLanguages.Java, new Core.Definitions.Java.Definition());
-        _definitions.put(SupportedLanguages.VisualBasic, new Core.Definitions.VisualBasic.Definition());
+        for(IDefinition def : Manifest.Definitions){
+            _definitions.put(def.Language(), def);
+        }
     }
 
     // Used to find the definition which matches the file type.
@@ -61,5 +85,13 @@ public class ProcessManager {
         IDefinition def = _definitions.get(type);
         if (def != null) return def;
         throw new DefinitionNotFoundException();
+    }
+
+    private IDefinition findDefinition(java.io.File file) throws NotSupportedException {
+        String name = file.getName();
+        for (IDefinition def : _definitions.values()){
+            if (name.endsWith(def.FileSignature())) return def;
+        }
+        throw new NotSupportedException();
     }
 }

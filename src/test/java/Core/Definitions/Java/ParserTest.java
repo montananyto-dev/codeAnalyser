@@ -1,5 +1,6 @@
 package Core.Definitions.Java;
 
+import Core.Definitions.SupportedLanguages;
 import Core.Entry;
 import Core.Exceptions.DefinitionNotFoundException;
 import Core.Exceptions.NotSupportedException;
@@ -88,7 +89,7 @@ public class ParserTest {
         }
         ProcessManager manager = new ProcessManager();
                try {
-            Report report = manager.process(_body, "file1.java");
+            Report report = manager.process(_body, "file1.java", SupportedLanguages.Java);
             for (Entry e : report.Entries) {
                 out.println(StringUtils.join(Arrays.asList(e.Path), ".") + ":" + e.Name + ": " + e.Type.name() + ":" + e.Value);
             }

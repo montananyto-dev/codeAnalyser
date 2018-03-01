@@ -1,13 +1,14 @@
 package Interface;
 
 import Core.Analyzer.Benchmarks.Types;
+import Core.Definitions.SupportedLanguages;
 import Core.Entry;
 import Core.Exceptions.DefinitionNotFoundException;
 import Core.Exceptions.NotSupportedException;
-import Core.Parser.Models.ParserObjects.Value;
+import Core.FileManager.Exceptions.OutputDirectoryNotSetException;
+import Core.FileManager.FileManager;
 import Core.ProcessManager;
 import Core.Report;
-import com.sun.deploy.util.StringUtils;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -22,34 +23,42 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static java.lang.System.out;
-
 
 public class Gui extends Application {
 
-    private String descriptionFileType = "empty";
-    private String extensionFile = "";
     private List<LabelFieldFactory.LabelField> LabelFields = new ArrayList<>();
-    TextArea textArea;
-    FileChooser fileChooser;
-    String fileName;
-    String[] body;
-    Stage window;
-    ObservableList <String> options;
-    ComboBox fileType;
-    Alert alert;
-    File file;
+
+    private ProcessManager _processManager = new ProcessManager();
+    private Report _report;
+    private SupportedLanguages type;
+
+    private File _defaultOutputDirectory = null;
+    private File _defaultInputDirectory = null;
+
+    private TextArea textArea;
+    private FileChooser fileChooser;
+    private Stage window;
+    private ObservableList <String> options;
+    private ComboBox fileType;
+    private Alert alert;
+    private File workfile;
+
+    private GridPane grid;
+    private TabPane tabPane;
+    private BorderPane mainPane;
+    private Button process;
+    private Button upload;
+    private Button save;
 
 
     @Override
@@ -60,154 +69,16 @@ public class Gui extends Application {
         primaryStage.setTitle("Welcome");
         Group root = new Group();
         Scene scene = new Scene(root, 1300, 900, Color.WHITE);
-
         scene.getStylesheets().add("gui.css");
 
-        TabPane tabPane = new TabPane();
-        BorderPane mainPane = new BorderPane();
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(30, 30, 30, 30));
-        grid.setAlignment(Pos.TOP_RIGHT);
-
-
-        ColumnConstraints col1 = new ColumnConstraints();
-        col1.setPercentWidth(10);
-        ColumnConstraints col2 = new ColumnConstraints();
-        col2.setPercentWidth(10);
-        ColumnConstraints col3 = new ColumnConstraints();
-        col3.setPercentWidth(10);
-        ColumnConstraints col4 = new ColumnConstraints();
-        col4.setPercentWidth(10);
-        ColumnConstraints col5 = new ColumnConstraints();
-        col5.setPercentWidth(10);
-        ColumnConstraints col6 = new ColumnConstraints();
-        col6.setPercentWidth(10);
-        ColumnConstraints col7 = new ColumnConstraints();
-        col7.setPercentWidth(25);
-
-
-        alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Warning Dialog");
-        alert.setHeaderText("Language required");
-        alert.setContentText("Please select the language required before pasting or uploading your code");
-
-
-        grid.getColumnConstraints().addAll( col1, col2, col3, col4, col5, col6, col7);
-
-
-        //Create a tab for upload
-        Tab uploadTab = new Tab();
-        uploadTab.setText("Upload");
-        tabPane.getTabs().add(uploadTab);
-
-
-        Tab resultTab = new Tab();
-        resultTab.setText("Result");
-        tabPane.getTabs().add(resultTab);
-
-        //set a grid for the tab upload independent from result tab
-        uploadTab.setContent(grid);
-
-        LabelFieldFactory lfFactory = new LabelFieldFactory(grid, 6,0, Color.WHITE);
-        LabelFields.add(lfFactory.build("Number of words"));
-        LabelFields.add(lfFactory.build("Number of lines"));
-        LabelFields.add(lfFactory.build("Number of Classes"));
-        LabelFields.add(lfFactory.build("Number of Methods"));
-        LabelFields.add(lfFactory.build("Number of Comments"));
-        LabelFields.add(lfFactory.build("Halstead complexity"));
-        LabelFields.add(lfFactory.build("Cyclomatic complexity"));
-
-        Button process = new Button();
-        process.setText("Process");
-        process.setOnAction(even->{
-
-            if (body.length > 0) {
-                run(body, fileName);
-
-            } else {
-                textArea.setText("The file is empty");
-            }
-
-        });
-
-        Button upload = new Button();
-        upload.setText("Upload File");
-        upload.setOnAction(event -> {
-
-            try {
-                if(fileType.getValue() == null){
-
-                    alert.show();
-                }else{
-                    setFileChooser(window);
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        });
-
-
-        grid.add(upload, 0, 50);
-        grid.add(process,2,50);
-
-        textArea = new TextArea();
-        textArea.setPrefSize(900, 900);
-
-        textArea.textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(final ObservableValue<? extends String> observable, final String oldValue, final String newValue) {
-
-                System.out.println(descriptionFileType);
-
-                if(descriptionFileType == "empty" || descriptionFileType != "Java" || descriptionFileType != "Visual Basic") {
-
-                    System.out.println(descriptionFileType);
-
-                    alert.show();
-
-                }
-            }
-        });
-
-        grid.add(textArea, 0, 0, 5, 48);
-
-        options = FXCollections.observableArrayList("Java", "Visual Basic");
-        fileType = new ComboBox(options);
-
-        fileType.valueProperty().addListener((observable, oldValue, newValue) -> {
-
-            if (newValue.toString().equals("Java")) {
-                descriptionFileType = "JAVA files (*.java)";
-                extensionFile = "*.java";
-                System.out.println(descriptionFileType);
-
-            } else if (newValue.toString().equals("Visual Basic")) {
-                descriptionFileType = "VISUAL BASIC files (*.vb)";
-                extensionFile = "*.vb";
-                System.out.println(descriptionFileType);
-
-            }
-        });
-
-        grid.add(fileType, 1, 50);
-        grid.getStyleClass().add("grid");
-
-        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-
-        // set lines visible for columns and rows
-       // grid.setGridLinesVisible(true);
-
-
-        mainPane.setCenter(tabPane);
-        mainPane.prefHeightProperty().bind(scene.heightProperty());
-        mainPane.prefWidthProperty().bind(scene.widthProperty());
-
-
+        setupGrid();
+        setupAlert();
+        setupTabPane();
+        setupLabelFields();
+        setupButtons();
+        setupTextArea();
+        setupTypeField();
+        setupMainPane(scene);
         root.getChildren().add(mainPane);
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -215,62 +86,53 @@ public class Gui extends Application {
     }
 
     public void setFileChooser(Stage window) throws IOException {
-
-        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter(descriptionFileType, extensionFile);
+        if (_defaultInputDirectory == null)
         fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().add(extFilter);
         fileChooser.setTitle("Open Resource File");
-        file = fileChooser.showOpenDialog(window);
-        body = readFile(file);
-        writeFile(body);
-        fileName = file.getName();
-
+        File file = fileChooser.showOpenDialog(window);
+        fileType.setValue(_processManager.determineLanguage(file).name());
+        setTextArea(FileManager.read(file));
+        workfile = file;
     }
 
-
-    private String[] readFile(File file) throws IOException {
-
-        FileReader fileReader = new FileReader(file);
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
-        List <String> lines = new ArrayList <>();
-        String line = null;
-        while ((line = bufferedReader.readLine()) != null) {
-            lines.add(line);
+    private void writeReportFile(Report report) {
+        if (_defaultOutputDirectory == null){
+            setDefaultOutputDirectory();
         }
-        bufferedReader.close();
-
-        return lines.toArray(new String[lines.size()]);
-    }
-
-    private void writeFile(String[] contentFile) {
-        for (String data : contentFile) {
-            textArea.appendText("\n" + data);
-        }
-    }
-
-    private void run(String[] body, String fileName)  {
-
-        ProcessManager manager = new ProcessManager();
         try {
-            Report report = manager.process(body, fileName);
-            for (Entry e : report.Entries) {
-                out.println(StringUtils.join(Arrays.asList(e.Path), ".") + ":" + e.Name + ": " + e.Type.name() + ":" + e.Value);
-            }
-            setCyclomaticComplexity(report);
-            setNumberOfLines(report);
-        } catch (DefinitionNotFoundException e) {
+            FileManager.write(report, _defaultOutputDirectory);
+        } catch (OutputDirectoryNotSetException | IOException e) {
             e.printStackTrace();
-        } catch (NotSupportedException e) {
+        }
+    }
+
+    private void setDefaultOutputDirectory(){
+        DirectoryChooser chooser = new DirectoryChooser();
+        _defaultOutputDirectory = chooser.showDialog(window);
+    }
+
+    private void run(File file){
+        try {
+            _report = _processManager.process(file);
+            setReportValues(_report);
+        } catch (NotSupportedException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private void run(String[] body, String fileName)  {
+        try {
+            _report = _processManager.process(body, fileName, SupportedLanguages.Java);
+            setReportValues(_report);
+
+        } catch (DefinitionNotFoundException | NotSupportedException e) {
             e.printStackTrace();
         }
 
     }
 
-    private LabelFieldFactory.LabelField findLabelField(String value){
-        for (LabelFieldFactory.LabelField lf : LabelFields) {
-            if (lf.Name.contains(value)) return lf;
-        }
-        return null;
+    private void setReportValues(Report report){
+        setCyclomaticComplexity(report);
+        setNumberOfLines(report);
     }
 
     private void setCyclomaticComplexity(Report report){
@@ -292,7 +154,172 @@ public class Gui extends Application {
         }
     }
 
+    private LabelFieldFactory.LabelField findLabelField(String value){
+        for (LabelFieldFactory.LabelField lf : LabelFields) {
+            if (lf.Name.contains(value)) return lf;
+        }
+        return null;
+    }
 
+    private String[] getTextArea(){
+        return textArea.getText().split("\n");
+    }
+
+
+    // setup
+    private void setTextArea(String[] lines){
+        textArea.clear();
+        for(String line : lines){
+            textArea.appendText(line + "\n");
+        }
+    }
+
+    private void setupMainPane(Scene scene) {
+        mainPane = new BorderPane();
+        mainPane.setCenter(tabPane);
+        mainPane.prefHeightProperty().bind(scene.heightProperty());
+        mainPane.prefWidthProperty().bind(scene.widthProperty());
+    }
+
+    private void setupTabPane() {
+        tabPane = new TabPane();
+        //Create a tab for upload
+        Tab uploadTab = new Tab();
+        uploadTab.setText("Upload");
+        tabPane.getTabs().add(uploadTab);
+
+
+        Tab resultTab = new Tab();
+        resultTab.setText("Result");
+        tabPane.getTabs().add(resultTab);
+
+        //set a grid for the tab upload independent from result tab
+        uploadTab.setContent(grid);
+
+        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+    }
+
+    private void setupGrid(){
+        grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(30, 30, 30, 30));
+        grid.setAlignment(Pos.TOP_RIGHT);
+
+
+        int[] widths = {10,10,10,10,10,10,25};
+        for (int i : widths){
+            ColumnConstraints constraint = new ColumnConstraints();
+            constraint.setPercentWidth(i);
+            grid.getColumnConstraints().add(constraint);
+        }
+
+        grid.getStyleClass().add("grid");
+
+        // set lines visible for columns and rows
+        // grid.setGridLinesVisible(true);
+    }
+
+    private void setupAlert(){
+        alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Warning Dialog");
+        alert.setHeaderText("Language required");
+        alert.setContentText("Please select the language required before pasting or uploading your code");
+    }
+
+    private void setupButtons(){
+        process = new Button();
+        process.setText("Process");
+        process.setOnAction(even->{
+
+            if (textArea.getText().length() > 0) {
+                if (workfile == null) {
+                    if (fileType.getValue().equals("")) alert.show();
+                    run(getTextArea(), "temp");
+                }
+                else run(workfile);
+
+            } else {
+                textArea.setText("The file is empty");
+            }
+
+        });
+
+        upload = new Button();
+        upload.setText("Upload File");
+        upload.setOnAction(event -> {
+
+            try {
+                setFileChooser(window);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+        save = new Button();
+        save.setText("Save Report");
+        save.setOnAction(event ->{
+            if (_report != null)
+                writeReportFile(_report);
+        });
+
+
+        grid.add(upload, 0, 50);
+        grid.add(process,2,50);
+        grid.add(save, 3, 50);
+    }
+
+    private void setupLabelFields(){
+        String[] vals = {"Number of words", "Number of lines","Number of Classes","Number of Methods",
+                         "Number of Comments", "Halstead complexity", "Cyclomatic complexity"};
+        LabelFieldFactory lfFactory = new LabelFieldFactory(grid, 6,0, Color.WHITE);
+        for(String s: vals){
+            LabelFields.add(lfFactory.build(s));
+        }
+    }
+
+    private void setupTypeField(){
+        options = FXCollections.observableArrayList("");
+        options.addAll(Arrays.asList(_processManager.getSupportedTypeNames()));
+
+        fileType = new ComboBox(options);
+
+        fileType.valueProperty().addListener((observable, oldValue, newValue) -> {
+
+            if (newValue.toString().equals("Java")) {
+                type = SupportedLanguages.Java;
+
+            } else if (newValue.toString().equals("Visual Basic")) {
+                type = SupportedLanguages.VisualBasic;
+            }
+            System.out.println(type.name());
+        });
+
+        grid.add(fileType, 1, 50);
+    }
+
+    private void setupTextArea(){
+        textArea = new TextArea();
+        textArea.setPrefSize(900, 900);
+        textArea.setWrapText(true);
+
+        textArea.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(final ObservableValue<? extends String> observable, final String oldValue, final String newValue) {
+
+                workfile = null;
+
+                System.out.println(fileType.valueProperty());
+
+                if(fileType.getValue().equals("empty")) {
+                    alert.show();
+
+                }
+            }
+        });
+
+        grid.add(textArea, 0, 0, 5, 48);
+    }
 
     private class LabelFieldFactory{
 

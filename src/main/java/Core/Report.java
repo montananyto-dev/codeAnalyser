@@ -2,12 +2,21 @@ package Core;
 
 import Core.Analyzer.Benchmarks.Types;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 // used to report the values of benchmark operations.
 public class Report {
+
+    public String Name;
+    public Timestamp Timestamp;
+
+    public Report(String name){
+        Name = name;
+        Timestamp = new Timestamp(System.currentTimeMillis());
+    }
 
     // contains analyze list of benchmarks run on various objects.
     public List<Entry> Entries = new ArrayList<>();
@@ -21,4 +30,7 @@ public class Report {
         Collections.addAll(Entries, entries);
     }
 
+    public void add(Entry entry) {
+        Entries.add(entry);
+    }
 }

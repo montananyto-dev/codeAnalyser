@@ -1,6 +1,7 @@
 package Core.Definitions.Java;
 
 import Core.Definitions.Java.Benchmarks.Lines;
+import Core.Definitions.SupportedLanguages;
 import Core.Entry;
 import Core.Exceptions.DefinitionNotFoundException;
 import Core.Exceptions.NotSupportedException;
@@ -80,7 +81,7 @@ public class TestMain {
         String javaFileName = "test.java";
         ProcessManager manager = new ProcessManager();
         try {
-            Report report = manager.process(_body, javaFileName);
+            Report report = manager.process(_body, javaFileName, SupportedLanguages.Java);
             for (Entry e : report.Entries) {
                 out.println(StringUtils.join(Arrays.asList(e.Path), ".") + ":" + e.Name + ": " + e.Type.name() + ":" + e.Value);
             }

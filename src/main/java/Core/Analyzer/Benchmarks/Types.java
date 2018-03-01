@@ -7,5 +7,12 @@ public enum Types {
     Comment,
     Cyclomatic,
     Halstead,
-    Lines
+    Lines;
+
+    public static Types find(String name){
+        for (Types type : Types.values()) {
+            if (type.name().equals(name)) return type;
+        }
+        return null;
+    }
 }

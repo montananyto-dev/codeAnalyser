@@ -18,7 +18,7 @@ public class Analyzer implements IAnalyzer {
 
     // used to run benchmarks on a file.
     public Report analyze(File model) {
-        Report report = new Report();
+        Report report = new Report(model.Package);
         for (IBenchmark benchmark: Benchmarks) {
             report.add(benchmark.run(model));
         }

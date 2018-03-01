@@ -13,5 +13,7 @@ public interface IDefinition {
     IParser Parser();
     // returns a new copy of the language specific Analyzer.
     IAnalyzer Analyzer();
+
+    String FileSignature();
 }
 
