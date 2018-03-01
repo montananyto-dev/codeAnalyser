@@ -1,8 +1,10 @@
 package Interface;
 
+import Core.Analyzer.Benchmarks.Types;
 import Core.Entry;
 import Core.Exceptions.DefinitionNotFoundException;
 import Core.Exceptions.NotSupportedException;
+import Core.Parser.Models.ParserObjects.Value;
 import Core.ProcessManager;
 import Core.Report;
 import com.sun.deploy.util.StringUtils;
@@ -38,6 +40,7 @@ public class Gui extends Application {
 
     private String descriptionFileType = "empty";
     private String extensionFile = "";
+    private List<LabelFieldFactory.LabelField> LabelFields = new ArrayList<>();
     TextArea textArea;
     FileChooser fileChooser;
     String fileName;
@@ -108,55 +111,20 @@ public class Gui extends Application {
         //set a grid for the tab upload independent from result tab
         uploadTab.setContent(grid);
 
-        Label numberOfWords = new Label("Number of words");
-        grid.add(numberOfWords, 6, 0);
-        TextField numberOfWordsField = new TextField();
-        grid.add(numberOfWordsField, 7, 0);
-        numberOfWords.setTextFill(Color.WHITE);
-
-        Label numberOfLines = new Label("Number of lines");
-        grid.add(numberOfLines, 6, 1);
-        TextField numberOfLinesField = new TextField();
-        grid.add(numberOfLinesField, 7, 1);
-        numberOfLines.setTextFill(Color.WHITE);
-
-        Label numberOfClasses = new Label("Number of Classes");
-        grid.add(numberOfClasses, 6, 2);
-        TextField numberOfClassesField = new TextField();
-        grid.add(numberOfClassesField, 7, 2);
-        numberOfClasses.setTextFill(Color.WHITE);
-
-        Label numberOfMethods = new Label("Number of Methods");
-        grid.add(numberOfMethods, 6, 3);
-        TextField numberOfMethodsField = new TextField();
-        grid.add(numberOfMethodsField, 7, 3);
-        numberOfMethods.setTextFill(Color.WHITE);
-
-        Label numberOfComments = new Label("Number of Comments");
-        grid.add(numberOfComments, 6, 4);
-        TextField numberOfCommentsField = new TextField();
-        grid.add(numberOfCommentsField, 7, 4);
-        numberOfComments.setTextFill(Color.WHITE);
-
-        Label halsteadComplexity = new Label("Halstead complexity");
-        grid.add(halsteadComplexity, 6, 5);
-        TextField halsteadComplexityField = new TextField();
-        grid.add(halsteadComplexityField, 7, 5);
-        halsteadComplexity.setTextFill(Color.WHITE);
-
-        Label cyclomaticComplexity = new Label("Cyclomatic complexity");
-        grid.add(cyclomaticComplexity, 6, 6);
-        TextField cyclomaticComplexityField = new TextField();
-        grid.add(cyclomaticComplexityField, 7, 6);
-        cyclomaticComplexity.setTextFill(Color.WHITE);
-
+        LabelFieldFactory lfFactory = new LabelFieldFactory(grid, 6,0, Color.WHITE);
+        LabelFields.add(lfFactory.build("Number of words"));
+        LabelFields.add(lfFactory.build("Number of lines"));
+        LabelFields.add(lfFactory.build("Number of Classes"));
+        LabelFields.add(lfFactory.build("Number of Methods"));
+        LabelFields.add(lfFactory.build("Number of Comments"));
+        LabelFields.add(lfFactory.build("Halstead complexity"));
+        LabelFields.add(lfFactory.build("Cyclomatic complexity"));
 
         Button process = new Button();
         process.setText("Process");
         process.setOnAction(even->{
 
             if (body.length > 0) {
-
                 run(body, fileName);
 
             } else {
@@ -288,11 +256,77 @@ public class Gui extends Application {
             for (Entry e : report.Entries) {
                 out.println(StringUtils.join(Arrays.asList(e.Path), ".") + ":" + e.Name + ": " + e.Type.name() + ":" + e.Value);
             }
-            assert true;
+            setCyclomaticComplexity(report);
+            setNumberOfLines(report);
         } catch (DefinitionNotFoundException e) {
             e.printStackTrace();
         } catch (NotSupportedException e) {
             e.printStackTrace();
+        }
+
+    }
+
+    private LabelFieldFactory.LabelField findLabelField(String value){
+        for (LabelFieldFactory.LabelField lf : LabelFields) {
+            if (lf.Name.contains(value)) return lf;
+        }
+        return null;
+    }
+
+    private void setCyclomaticComplexity(Report report){
+        int sum = 0;
+        for (Entry e : report.Entries){
+            if (e.Type == Types.Cyclomatic) sum += e.Value;
+        }
+        LabelFieldFactory.LabelField lf = findLabelField("Cyclomatic");
+        if (lf != null) lf.Field.setText(Integer.toString(sum));
+    }
+
+    private void setNumberOfLines(Report report){
+        for (Entry e : report.Entries){
+            if (e.Type == Types.Lines){
+                LabelFieldFactory.LabelField lf = findLabelField("lines");
+                if (lf != null) lf.Field.setText(Integer.toString(e.Value));
+                break;
+            }
+        }
+    }
+
+
+
+    private class LabelFieldFactory{
+
+        public class LabelField{
+            public final Label Label;
+            public final TextField Field;
+            public final String Name;
+
+            public LabelField(String name, Label label, TextField field){
+                Name = name;
+                Label = label;
+                Field = field;
+            }
+        }
+        private GridPane _grid;
+        private int _column;
+        private int _row;
+        private Color _color;
+
+        public LabelFieldFactory(GridPane grid, int column, int row, Color color){
+            _grid = grid;
+            _column = column;
+            _row = row;
+            _color = color;
+        }
+
+        public LabelField build(String text){
+            Label label = new Label(text);
+            _grid.add(label, _column, _row);
+            TextField field = new TextField();
+            _grid.add(field, _column+1, _row);
+            _row++;
+            label.setTextFill(_color);
+            return new LabelField(text, label, field);
         }
 
     }
