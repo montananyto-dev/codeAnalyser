@@ -4,13 +4,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class LineParser {
+public abstract class LineParser {
 
     private List<String> _words;
     private String _current;
-    protected char[] _delimiters;
+    private char[] _delimiters = setDelimiters();
 
-    protected List<ConsolidationProfile> _consolidationProfiles = new ArrayList<>();
+    protected abstract char[] setDelimiters();
+
+    protected List<ConsolidationProfile> _consolidationProfiles = setConsolidationProfiles();
+
+    protected abstract List<ConsolidationProfile> setConsolidationProfiles();
 
     public String[] parse(String line) {
         _current = "";
@@ -43,7 +47,7 @@ public class LineParser {
         return _words.toArray(new String[_words.size()]);
     }
 
-    public String[] mergeScope(String[] line, String open, String close){
+    public static String[] mergeScope(String[] line, String open, String close){
         List<String> result = new ArrayList<>();
         boolean isMerging = false;
         String value = "";
@@ -66,7 +70,7 @@ public class LineParser {
         return result.toArray(new String[result.size()]);
     }
 
-    public String[] eliminateGenerics(String[] line){
+    public static String[] eliminateGenerics(String[] line){
         List<String> result = new ArrayList<>();
         boolean skip = false;
         for (int i = 0; i < line.length; i++){
@@ -80,7 +84,7 @@ public class LineParser {
         return result.toArray(new String[result.size()]);
     }
 
-    public String[] mergeGenerics(String[] line){
+    public static String[] mergeGenerics(String[] line){
         return mergeScope(line, "<", ">");
     }
 
@@ -94,7 +98,7 @@ public class LineParser {
         _words = consolidated;
     }
 
-    private List<String> consolidatePair(List<String> words, String[] starts, String[] ends){
+    private static List<String> consolidatePair(List<String> words, String[] starts, String[] ends){
         List<String> cons = new ArrayList<>();
         for (int i = 0; i < words.size(); i++){
             String val = words.get(i);
@@ -111,7 +115,7 @@ public class LineParser {
         return cons;
     }
 
-    private List<String> consolidatePair(List<String> words, String[] starts, String[] ends, boolean mergeWithPervious){
+    private static List<String> consolidatePair(List<String> words, String[] starts, String[] ends, boolean mergeWithPervious){
         if (!mergeWithPervious) return consolidatePair(words, starts, ends);
         List<String> cons = new ArrayList<>();
         for (int i = 0; i < words.size(); i++){
@@ -134,7 +138,7 @@ public class LineParser {
         return cons;
     }
 
-    private boolean contains(String[] list, String value){
+    private static boolean contains(String[] list, String value){
         for (String str:list) {
             if (str.equals(value)) return true;
         }

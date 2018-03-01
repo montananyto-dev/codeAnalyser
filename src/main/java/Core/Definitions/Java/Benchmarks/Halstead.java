@@ -28,6 +28,6 @@ public class Halstead extends Core.Analyzer.Benchmarks.HalsteadBase {
 
     @Override
     protected LineParser setLineParser() {
-        return Core.Definitions.Java.Parser.LineParser;
+        return new Core.Definitions.Java.LineParser();
     }
 }
