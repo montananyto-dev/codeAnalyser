@@ -1,23 +1,25 @@
 package Core.Definitions.Java;
 
+import Core.Definitions.Java.Benchmarks.Lines;
 import Core.Entry;
 import Core.Exceptions.DefinitionNotFoundException;
 import Core.Exceptions.NotSupportedException;
-import Core.Parser.Models.Class;
+import Core.Parser.IParser;
 import Core.Parser.Models.File;
-import Core.Parser.Models.Parameter;
 import Core.ProcessManager;
 import Core.Report;
 import com.sun.deploy.util.StringUtils;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static java.lang.System.out;
 
-public class ParserTest {
-    private static String[] _body = {
+public class TestMain {
+
+
+
+    String[] _body = {
             "    /* this",
             "       a test",
             "       block */",
@@ -31,7 +33,6 @@ public class ParserTest {
             "    private String _name;",
             "    public String Type;",
             "    public List<Field> Fields = new ArrayList<>(test t",
-            "",
             "                                                value v);",
             "    public List<Method> Methods = new ArrayList<>();",
             "    public List<Class> Classes = new ArrayList<>();",
@@ -72,23 +73,14 @@ public class ParserTest {
             "}"};
 
     @Test
-    public void testParseFile(){
-        Parser p = new Parser();
-        File model = p.parse(_body);
-        assert (model.Classes.size() == 1 &&
-                model.Classes.get(0).Methods.size() == 3 &&
-                model.Classes.get(0).Fields.size() == 8);
-    }
+    public void testMe() {
 
-    @Test
-    public void testLinesBenchmark(){
 
-        for(String s : _body){
-            System.out.println(s);
-        }
+
+        String javaFileName = "test.java";
         ProcessManager manager = new ProcessManager();
-               try {
-            Report report = manager.process(_body, "file1.java");
+        try {
+            Report report = manager.process(_body, javaFileName);
             for (Entry e : report.Entries) {
                 out.println(StringUtils.join(Arrays.asList(e.Path), ".") + ":" + e.Name + ": " + e.Type.name() + ":" + e.Value);
             }

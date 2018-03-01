@@ -12,4 +12,5 @@ public abstract class CommentBase implements IBenchmark {
     }
 
     public abstract Entry[] run(File model);
+
 }

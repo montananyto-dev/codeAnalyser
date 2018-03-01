@@ -21,6 +21,8 @@ public class Lines extends Core.Analyzer.Benchmarks.LinesBase {
         return entries.toArray(new Entry[entries.size()]);
     }
 
+
+
     private Entry analyzeMethod(Method method){
         Entry entry = new Entry();
         entry.Name = method.FullName();
