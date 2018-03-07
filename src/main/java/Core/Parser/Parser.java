@@ -1,31 +1,34 @@
 package Core.Parser;
 
 import Core.Definitions.SupportedLanguages;
+import Core.Parser.Models.*;
 import Core.Parser.Models.Class;
-import Core.Parser.Models.Field;
-import Core.Parser.Models.File;
-import Core.Parser.Models.Method;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Parser implements IParser{
-    protected final String[] _modifiers = setModifiers();
-    protected final String[] _objects = setObjects();
-    protected final String[] _inheritance = setInheritance();
-    protected final String[] _imports = setImports();
-    protected final String[] _package = setPackage();
-    protected final String[] _commentline = setCommentLine();
-    protected final String[] _commentBlock = setCommentBlock();
-    protected final String[] _scopeOpens = setScopeOpen();
-    protected final String[] _scopeCloses = setScopeClose();
+    protected final String[] Modifiers = setModifiers();
+    protected final String[] Objects = setObjects();
+    protected final String[] Inheritance = setInheritance();
+    protected final String[] Imports = setImports();
+    protected final String[] Package = setPackage();
+    protected final String[] Commentline = setCommentLine();
+    protected final String[] CommentBlock = setCommentBlock();
+    protected final String[] BlockScopeOpens = setScopeOpen();
+    protected final String[] BlockScopeCloses = setScopeClose();
+    protected final String[] ParameterScopeOpens = setParameterScopeOpens();
+    protected final String[] ParameterScopeCloses = setParameterScopeCloses();
+    protected final SupportedLanguages Type = setLanguageType();
 
 
-    protected int _line = 0;
-    protected String[] _body;
-    protected int _scopeopen = 0;
-    protected int _scopeClose = 0;
-    protected int _scopeLevel = 0;
+    protected int Line = 0;
+    protected String[] Body;
+    private int _blockScopeOpen = 0;
+    private int _blockScopeClose = 0;
+    private int _blockscopeLevel = 0;
+    private int _parameterScopeOpen = 0;
+    private int _parameterScopeClose = 0;
 
 
     protected abstract String[] setModifiers();
@@ -37,6 +40,9 @@ public abstract class Parser implements IParser{
     protected abstract String[] setCommentBlock();
     protected abstract String[] setScopeOpen();
     protected abstract String[] setScopeClose();
+    protected abstract String[] setParameterScopeOpens();
+    protected abstract String[] setParameterScopeCloses();
+    protected abstract SupportedLanguages setLanguageType();
 
     protected List<String> _commentBuffer;
 
@@ -45,47 +51,46 @@ public abstract class Parser implements IParser{
     protected abstract Core.Parser.LineParser setLineParser();
 
     public File parse(String[] rawText) {
-        _line = 0;
-        _body = rawText;
+        Line = 0;
+        Body = rawText;
         _commentBuffer = new ArrayList<>();
         return parseFile();
         //stuff
     }
 
 
-    protected File parseFile(){
+    private File parseFile(){
         File file = new File();
-        file.Type = SupportedLanguages.Java;
-        file.Body(_body);
-        for (; _line < _body.length; _line++){
-            String[] line = _lineParser.parse(_body[_line]);
+        file.Type = Type;
+        file.Body(Body);
+        for (; Line < Body.length; Line++){
+            String[] line = _lineParser.parse(Body[Line]);
             if (line.length <= 0) continue;
             File.ContentTypes type = determineFileContent(line);
             if (type == null) continue;
-            DetermineFileAction(file, line, type);
+            determineFileAction(file, line, type);
         }
         return file;
     }
 
-    protected abstract void DetermineFileAction(File file, String[] line, File.ContentTypes type);
+    protected abstract void determineFileAction(File file, String[] line, File.ContentTypes type);
 
     protected abstract File.ContentTypes determineFileContent(String[] line);
 
     protected Class parseClass(String[] currentLine) {
-        _scopeLevel+=1;
+        _blockscopeLevel +=1;
         Class cl = buildClass(currentLine);
         List<String> body = new ArrayList<>();
-        for (_line++; _line < _body.length; _line++){
-            String[] line = _lineParser.parse(_body[_line]);
+        for (Line++; Line < Body.length; Line++){
+            String[] line = _lineParser.parse(Body[Line]);
             if (line.length <= 0) continue;
-            if (ScopeCheck(line))
-                break;
-            body.add(_body[_line]);
+            if (BlockScopeEnded()) break;
+            body.add(Body[Line]);
             Class.ContentTypes type = determineClassContent(line);
             determineClassAction(cl, line, type);
         }
         cl.Body(body.toArray(new String[body.size()]));
-        _scopeLevel -=1;
+        _blockscopeLevel -=1;
         return cl;
     }
 
@@ -98,10 +103,15 @@ public abstract class Parser implements IParser{
     protected Field parseField(String[] line) {
         Field field = buildField(line);
         List<String> body = new ArrayList<>();
-        for(; _line < _body.length; _line++){
-            line = _lineParser.parse(_body[_line]);
-            body.add(_body[_line]);
-            if (shouldStopParsingField(line))break;
+        if (shouldStopParsingField(line)){
+            body.add(Body[Line]);
+        }
+        else {
+            for (Line+=1; Line < Body.length; Line++) {
+                body.add(Body[Line]);
+                line = _lineParser.parse(Body[Line]);
+                if (shouldStopParsingField(line)) break;
+            }
         }
         field.Body(body.toArray(new String[body.size()]));
         return field;
@@ -113,64 +123,84 @@ public abstract class Parser implements IParser{
 
     protected Method parseMethod(String[] line) {
         Method method = buildMethod(line);
+        method.add(parseParameters(line));
         List<String> body = new ArrayList<>();
-        for (_line+=1;_line < _body.length; _line++){
-            String[] current = _lineParser.parse(_body[_line]);
-            if (checkIterateScope(current)){
-                if (checkScopeEnded()) break;
-            }
-            body.add(_body[_line]);
+        for (Line +=1; Line < Body.length; Line++){
+            String[] current = _lineParser.parse(Body[Line]);
+            if (BlockScopeEnded()){break;}
+            body.add(Body[Line]);
         }
         method.Body(body.toArray(new String[body.size()]));
         return method;
     }
 
-    protected boolean checkScopeEnded() {
-        return _scopeopen - _scopeClose == _scopeLevel;
+    protected Parameter[] parseParameters(String[] line) {
+        List<Parameter> params = new ArrayList<>();
+        boolean closed = false;
+        line = Core.Definitions.Java.LineParser.mergeGenerics(line);
+        for (; Line < Body.length;){
+            for (int i = Helper.find(line, "(")+1; i < line.length; i++) {
+                if (line[i].equals(",")) continue;
+                if (Helper.contains(ParameterScopeCloses, line[i])) {
+                    if (ParameterScopeEnded()) {
+                        closed = true;
+                        break;
+                    }
+                }
+                Parameter param = buildParameter(line, i);
+                params.add(param);
+                i += 1;
+            }
+            if (closed) break;
+            Line++;
+            line = Core.Definitions.Java.LineParser.mergeGenerics(_lineParser.parse(Body[Line]));
+        }
+        return params.toArray(new Parameter[params.size()]);
     }
 
+    protected abstract Parameter buildParameter(String[] line, int i);
     protected abstract Method buildMethod(String[] line);
 
-    protected boolean ScopeCheck(String[] line) {
-        if (Helper.contains(line, "}")){
-            _scopeClose++;
-            if (_scopeopen - _scopeClose == _scopeLevel) return true;
-        }
-        return false;
+    protected boolean BlockScopeEnded() {
+        return _blockScopeClose != 0 && _blockScopeOpen - _blockScopeClose == _blockscopeLevel;
     }
 
-    protected boolean checkIterateScope(String word){
-        if (Helper.contains(_scopeOpens, word)) {
-            _scopeopen++;
-            return true;
-        }
-        if (Helper.contains(_scopeCloses, word)) {
-            _scopeClose++;
-            return true;
-        }
-        return false;
+    protected boolean ParameterScopeEnded(){
+        return _parameterScopeOpen == _parameterScopeClose;
     }
 
-    protected boolean checkIterateScope(String[] line){
-        boolean res = false;
-        for (String word: line){
-            if (checkIterateScope(word)) res = true;
+    protected void iterateScope(String word){
+        if (Helper.contains(ParameterScopeOpens, word)){
+            _parameterScopeOpen++;
+            return;
         }
-        return res;
+        if (Helper.contains(ParameterScopeCloses, word)){
+            _parameterScopeClose++;
+            return;
+        }
+        if (Helper.contains(BlockScopeOpens, word)){
+            _blockScopeOpen++;
+            return;
+        }
+        if (Helper.contains(BlockScopeCloses, word)) {
+            _blockScopeClose++;
+            return;
+        }
     }
 
     protected String[] parseComment(String commentChar){
-        if (Helper.contains(_commentline, commentChar)){
-            int start = _body[_line].indexOf(commentChar);
-            return new String[]{_body[_line].substring(start)};
+        if (Helper.contains(Commentline, commentChar)){
+            int start = Body[Line].indexOf(commentChar);
+            return new String[]{Body[Line].substring(start)};
         }
         String[] current;
         List<String> res = new ArrayList<>();
         do{
-            res.add(_body[_line]);
-            current = _lineParser.parse(_body[_line]);
-            _line++;
-        }while (!Helper.contains(current, _commentBlock[1]));
+            res.add(Body[Line]);
+            current = _lineParser.parse(Body[Line]);
+            Line++;
+        }while (!Helper.contains(current, CommentBlock[1]));
+        Line--;
         return res.toArray(new String[res.size()]);
     }
 

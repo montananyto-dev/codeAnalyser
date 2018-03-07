@@ -6,8 +6,7 @@ import java.util.List;
 
 public abstract class LineParser {
 
-    private List<String> _words;
-    private String _current;
+    private Parser _parent;
     private char[] _delimiters = setDelimiters();
 
     protected abstract char[] setDelimiters();
@@ -16,35 +15,42 @@ public abstract class LineParser {
 
     protected abstract List<ConsolidationProfile> setConsolidationProfiles();
 
+    public LineParser(){}
+
+    public LineParser(Parser parent){
+        _parent = parent;
+    }
+
     public String[] parse(String line) {
-        _current = "";
-        _words = new ArrayList<>();
+        List<String> words = new ArrayList<>();
+        String current = "";
         boolean insideString = false;
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
-            if (c == '"' && !_words.get(_words.size()-1).equals("\\")){
+            if (c == '"' && !current.endsWith("\\")){
                 insideString = !insideString;
             }
             if (!insideString) {
                 if (c == ' ') {
-                    _words.add(_current);
-                    _current = "";
+                    words.add(current);
+                    current = "";
                     continue;
                 }
                 if (isDelimiter(c)) {
-                    _words.add(_current);
-                    _words.add("" + c);
-                    _current = "";
+                    words.add(current);
+                    words.add("" + c);
+                    current = "";
                     continue;
                 }
             }
-            _current += c;
+            current += c;
         }
-        if (!_current.equals("")){
-            _words.add(_current);
+        if (!current.equals("")){
+            words.add(current);
         }
-        consolidateWords();
-        return _words.toArray(new String[_words.size()]);
+        words = consolidateWords(words);
+        countScopeChanges(words);
+        return words.toArray(new String[words.size()]);
     }
 
     public static String[] mergeScope(String[] line, String open, String close){
@@ -88,23 +94,31 @@ public abstract class LineParser {
         return mergeScope(line, "<", ">");
     }
 
-    private void consolidateWords(){
-        List<String> consolidated = new ArrayList<>(_words);
+    private List<String> consolidateWords(List<String> words){
+        List<String> consolidated = new ArrayList<>(words);
         consolidated.removeAll(Collections.singleton(""));
         consolidated.removeAll(Collections.singleton(null));
         for (ConsolidationProfile profile : _consolidationProfiles){
             consolidated = consolidatePair(consolidated, profile.Start, profile.End, profile.MergeWithPrevious);
         }
-        _words = consolidated;
+        words = consolidated;
+        return words;
+    }
+
+    private void countScopeChanges(List<String> words){
+        if (_parent == null) return;
+        for (String word : words){
+            _parent.iterateScope(word);
+        }
     }
 
     private static List<String> consolidatePair(List<String> words, String[] starts, String[] ends){
         List<String> cons = new ArrayList<>();
         for (int i = 0; i < words.size(); i++){
             String val = words.get(i);
-            if (contains(starts, val) && i+1 < words.size()){
+            if (Helper.contains(starts, val) && i+1 < words.size()){
                 String next = words.get(i+1);
-                if (contains(ends, next)){
+                if (Helper.contains(ends, next)){
                     cons.add(val+next);
                     i+=1;
                     continue;
@@ -120,13 +134,13 @@ public abstract class LineParser {
         List<String> cons = new ArrayList<>();
         for (int i = 0; i < words.size(); i++){
             String val = words.get(i);
-            if (contains(starts, val)){
+            if (Helper.contains(starts, val)){
                 if (i+1 >= words.size()) {
                     cons.add(val);
                     continue;
                 }
                 String next = words.get(i+1);
-                if (contains(ends, next)){
+                if (Helper.contains(ends, next)){
                     String prev = cons.get(cons.size()-1);
                     cons.set(cons.size()-1, prev + val + next);
                     i+=1;
@@ -137,14 +151,6 @@ public abstract class LineParser {
         }
         return cons;
     }
-
-    private static boolean contains(String[] list, String value){
-        for (String str:list) {
-            if (str.equals(value)) return true;
-        }
-        return false;
-    }
-
 
     private boolean isDelimiter(char c){
         for(int i = 0; i < _delimiters.length; i++){

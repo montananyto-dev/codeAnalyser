@@ -1,8 +1,5 @@
 package Core.FileManager;
 
-import Core.Analyzer.Benchmarks.Types;
-import Core.Entry;
-import Core.FileManager.Exceptions.FileNotValidException;
 import Core.FileManager.Exceptions.OutputDirectoryNotSetException;
 import Core.Report;
 
@@ -10,8 +7,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -24,9 +19,13 @@ public class FileManager {
         return lines.toArray(new String[lines.size()]);
     }
 
+    public static Report readCsv(File file) throws Exception {
+        return CsvBuilder.read(file);
+    }
+
     public static void write(Report report, File file) throws OutputDirectoryNotSetException, IOException {
         if (!file.isDirectory()) throw new OutputDirectoryNotSetException();
-        String[] csv = buildCsv(report);
+        String[] csv = CsvBuilder.build(report);
         File out = new File(file.getAbsolutePath() + "\\" + report.Name + longToString(report.Timestamp.getTime()) + ".csv");
         out.createNewFile();
         FileWriter writer = new FileWriter(out);
@@ -35,106 +34,8 @@ public class FileManager {
         }
         writer.close();
     }
-
-
-
-    public static Report readCsv(File file) throws IOException, FileNotValidException {
-        List<String> rawText = Files.readAllLines(file.toPath());
-        return readCsv(rawText.toArray(new String[rawText.size()]));
-    }
-
-    public static Report readCsv(String[] rawText) throws FileNotValidException {
-        if (rawText.length == 0) throw new FileNotValidException();
-        Report result = decodeReport(rawText[0]);
-        for (int i = 1; i < rawText.length; i++) {
-            result.add(decodeEntry(rawText[i]));
-        }
-        return result;
-    }
-
-    public static String[] buildCsv(Report report){
-        List<String> values = new ArrayList<>();
-        values.add(csvEncode(report));
-        for (Entry e : report.Entries){
-            String val = "";
-            val += e.Type.name() + ",";
-            val += csvEncode(e.Name) + ",";
-            val += csvEncode(e.Path) + ",";
-            val += e.Values + "\n";
-            values.add(val);
-        }
-        return values.toArray(new String[values.size()]);
-    }
-
-    private static Report decodeReport(String line){
-        String[] values = decodeLine(line);
-        Report result = new Report(values[0]);
-        result.Timestamp = new Timestamp(Long.parseLong(values[1]));
-        return result;
-    }
-
-    private static Entry decodeEntry(String line){
-        String[] decoded = decodeLine(line);
-        return new Entry(decoded[1],
-                         csvDecodeArray(decoded[2]),
-                         Types.find(decoded[0]),
-                         Integer.parseInt(decoded[3]));
-
-    }
-
-    private static String[] decodeLine(String line){
-        List<String> values = new ArrayList<>();
-        String value = "";
-        boolean insideQuotes = false;
-        for (char c : line.toCharArray()){
-            if (c == ',' && !insideQuotes){
-                values.add(value);
-                value = "";
-                continue;
-            }
-            if (c == '"'){
-                insideQuotes = !insideQuotes;
-                continue;
-            }
-            value += c;
-        }
-        if (!value.equals("")) values.add(value);
-        return values.toArray(new String[values.size()]);
-    }
-
-    private static String csvEncode(String string){
-       return "\"" + string + "\"";
-    }
-
-    private static String csvEncode(String[] array){
-        if (array.length == 0) return "";
-        String value = "\"";
-        for (String str : array){
-            value += str + ",";
-        }
-        value = value.substring(0, value.length() - 2);
-        value += "\"";
-        return value;
-    }
-
-    private static String csvEncode(Report report){
-        return report.Name + "," + report.Timestamp.getTime() + "\n";
-    }
-
-    private static String[] csvDecodeArray(String array){
-        List<String> values = new ArrayList<>();
-        String value = "";
-        for (char c : array.toCharArray()){
-            if (c == ',') {
-                values.add(value);
-                value = "";
-            }
-            value += c;
-        }
-        return values.toArray(new String[values.size()]);
-    }
-
     private static String longToString(long val){
         return String.format("%020d", val);
     }
+
 }

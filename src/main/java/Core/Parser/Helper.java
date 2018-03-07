@@ -35,6 +35,6 @@ public class Helper {
         for (int i = 0; i < list.length; i++){
             if (list[i].equals(value)) return i;
         }
-        return 0;
+        return -1;
     }
 }

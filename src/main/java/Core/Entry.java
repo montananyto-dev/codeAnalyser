@@ -41,4 +41,11 @@ public class Entry {
         Type = type;
         Values.put("value", value);
     }
+
+    public Entry(String name, String[] path, Types type, Map<String, Number> values){
+        Name = name;
+        Path = path;
+        Type = type;
+        Values = values;
+    }
 }

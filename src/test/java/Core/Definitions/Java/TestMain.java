@@ -36,7 +36,7 @@ public class TestMain {
             "    public List<Class> Classes = new ArrayList<>();",
             "    // test field comments",
             "    public String[] Comments;",
-            "    private String[] _body;",
+            "    private String[] Body;",
             "    // this is a test",
             "    public void add(Field field,",
             "                    val v){",

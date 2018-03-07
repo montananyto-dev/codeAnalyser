@@ -4,6 +4,7 @@ import Core.Definitions.SupportedLanguages;
 import Core.Entry;
 import Core.Exceptions.DefinitionNotFoundException;
 import Core.Exceptions.NotSupportedException;
+import Core.Parser.IParser;
 import Core.Parser.Models.File;
 import Core.ProcessManager;
 import Core.Report;
@@ -35,7 +36,7 @@ public class ParserTest {
             "    public List<Class> Classes = new ArrayList<>();",
             "    // test field comments",
             "    public String[] Comments;",
-            "    private String[] _body;",
+            "    private String[] Body;",
             "    // this is a test",
             "    public void add(Field field,",
             "                    val v){",
@@ -70,8 +71,8 @@ public class ParserTest {
             "}"};
 
     @Test
-    public void testParseFile(){
-        Parser p = new Parser();
+    public void testJavaParseFile(){
+        IParser p = new Definition().Parser();
         File model = p.parse(_body);
         assert (model.Classes.size() == 1 &&
                 model.Classes.get(0).Methods.size() == 3 &&
@@ -79,13 +80,13 @@ public class ParserTest {
     }
 
     @Test
-    public void testLinesBenchmark(){
+    public void testJavaBenchmarks(){
 
         for(String s : _body){
             System.out.println(s);
         }
         ProcessManager manager = new ProcessManager();
-               try {
+        try {
             Report report = manager.process(_body, "file1.java", SupportedLanguages.Java);
             for (Entry e : report.Entries) {
                 out.println(StringUtils.join(Arrays.asList(e.Path), ".") + ":" + e.Name + ": " + e.Type.name() + ":" + e.Values);
