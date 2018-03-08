@@ -4,10 +4,12 @@ package Core.Analyzer.Benchmarks;
 // using an enum so that the possible benchmarks are set and we can continually reference back here instead of repeatedly
 //      parsing the benchmark names.
 public enum Types {
-    Comment,
+    CommentCount,
     Cyclomatic,
     Halstead,
-    Lines;
+    LinesCount,
+    MethodCount,
+    WordCount;
 
     public static Types find(String name){
         for (Types type : Types.values()) {

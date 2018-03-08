@@ -10,10 +10,10 @@ import Core.Parser.Models.Object;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LinesBase implements IBenchmark {
+public class LinesCount implements IBenchmark {
 
     public Types Type() {
-        return Types.Lines;
+        return Types.LinesCount;
     }
 
     public Entry[] run(File model) {

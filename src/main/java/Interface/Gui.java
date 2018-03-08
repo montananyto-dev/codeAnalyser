@@ -28,6 +28,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -64,7 +65,7 @@ public class Gui extends Application {
     private Button save;
     private Button clear;
 
-    String[] vals = {"Number of words", "Number of lines", "Number of Classes", "Number of Methods",
+    String[] vals = {"Number of Words", "Number of Lines", "Number of Methods",
             "Number of Comments", "Cyclomatic complexity",
             "Halstead Volume", "Halstead Difficulty", "Halstead Effort", "Halstead Time To Code", "Halstead Delivered Bugs"};
 
@@ -98,16 +99,6 @@ public class Gui extends Application {
 
     }
 
-    public void setFileChooser(Stage window) throws IOException {
-        if (_defaultInputDirectory == null)
-            fileChooser = new FileChooser();
-        fileChooser.setTitle("Open Resource File");
-        File file = fileChooser.showOpenDialog(window);
-        fileType.setValue(_processManager.determineLanguage(file).name());
-        setTextArea(FileManager.read(file));
-        workfile = file;
-    }
-
     private void writeReportFile(Report report) {
         if (_defaultOutputDirectory == null) {
             setDefaultOutputDirectory();
@@ -117,11 +108,6 @@ public class Gui extends Application {
         } catch (OutputDirectoryNotSetException | IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private void setDefaultOutputDirectory() {
-        DirectoryChooser chooser = new DirectoryChooser();
-        _defaultOutputDirectory = chooser.showDialog(window);
     }
 
     private void run(File file) {
@@ -143,59 +129,6 @@ public class Gui extends Application {
         }
     }
 
-    private void setReportValues(Report report) {
-        setCyclomaticComplexity(report);
-        setNumberOfLines(report);
-        setHalstead(report);
-        setNumberOfComments(report);
-    }
-
-
-    private void setCyclomaticComplexity(Report report) {
-        int sum = 0;
-        for (Entry e : report.Entries) {
-            if (e.Type == Types.Cyclomatic) sum += (int) e.Values.get("value");
-        }
-        LabelFieldFactory.LabelField lf = findLabelField("Cyclomatic");
-        if (lf != null) lf.Field.setText(Integer.toString(sum));
-    }
-
-    private void setNumberOfLines(Report report) {
-        for (Entry e : report.Entries) {
-            if (e.Type == Types.Lines) {
-                LabelFieldFactory.LabelField lf = findLabelField("lines");
-                if (lf != null) lf.Field.setText(e.Values.get("value").toString());
-                break;
-            }
-        }
-    }
-
-    private void setHalstead(Report report) {
-        for (Entry e : report.Entries) {
-            if (e.Type == Types.Halstead) {
-                for (String key : e.Values.keySet()) {
-                    LabelFieldFactory.LabelField lf = findLabelField(key);
-                    if (lf != null) lf.Field.setText(e.Values.get(key).toString());
-                }
-                break;
-            }
-        }
-    }
-
-    private void setNumberOfComments(Report report){
-
-        for(Entry e:report.Entries){
-            if(e.Type == Types.Comment){
-                LabelFieldFactory.LabelField lf = findLabelField("Comments");
-                System.out.println(lf);
-                if(lf != null) lf.Field.setText(e.Values.get("values").toString());
-                break;
-            }
-        }
-
-    }
-
-
     private LabelFieldFactory.LabelField findLabelField(String value) {
         for (LabelFieldFactory.LabelField lf : LabelFields) {
             if (lf.Name.contains(value)) return lf;
@@ -212,6 +145,21 @@ public class Gui extends Application {
         for (String line : lines) {
             textArea.appendText(line + "\n");
         }
+    }
+
+    public void setFileChooser(Stage window) throws IOException {
+        if (_defaultInputDirectory == null)
+            fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Resource File");
+        File file = fileChooser.showOpenDialog(window);
+        fileType.setValue(_processManager.determineLanguage(file).name());
+        setTextArea(FileManager.read(file));
+        workfile = file;
+    }
+
+    private void setDefaultOutputDirectory() {
+        DirectoryChooser chooser = new DirectoryChooser();
+        _defaultOutputDirectory = chooser.showDialog(window);
     }
 
     // setup
@@ -290,8 +238,6 @@ public class Gui extends Application {
         alertNotSupportedFile.setContentText("Please select or paste supported codes");
 
     }
-
-
 
     // run(getTextArea(), "temp");
     //textArea.setText("The file is empty");
@@ -407,6 +353,7 @@ public class Gui extends Application {
         });
 
     }
+
     private void setupTextArea() {
         textArea = new TextArea();
         textArea.setPrefSize(800, 700);
@@ -461,6 +408,77 @@ public class Gui extends Application {
         }
 
     }
+
+    private void setReportValues(Report report) {
+        setCyclomaticComplexity(report);
+        setNumberOfLines(report);
+        setHalstead(report);
+        setNumberOfComments(report);
+        setNumberOfMethods(report);
+        setNumberOfWords(report);
+    }
+
+    private void setCyclomaticComplexity(Report report) {
+        int sum = 0;
+        for (Entry e : report.Entries) {
+            if (e.Type == Types.Cyclomatic) sum += (int) e.Values.get("value");
+        }
+        LabelFieldFactory.LabelField lf = findLabelField("Cyclomatic");
+        if (lf != null) lf.Field.setText(Integer.toString(sum));
+    }
+
+    private void setNumberOfLines(Report report) {
+        for (Entry e : report.Entries) {
+            if (e.Type == Types.LinesCount) {
+                LabelFieldFactory.LabelField lf = findLabelField("Lines");
+                if (lf != null) lf.Field.setText(e.Values.get("value").toString());
+                break;
+            }
+        }
+    }
+
+    private void setHalstead(Report report) {
+        for (Entry e : report.Entries) {
+            if (e.Type == Types.Halstead) {
+                for (String key : e.Values.keySet()) {
+                    LabelFieldFactory.LabelField lf = findLabelField(key);
+                    if (lf != null) lf.Field.setText(new DecimalFormat("0.00").format(e.Values.get(key)));
+                }
+                break;
+            }
+        }
+    }
+
+    private void setNumberOfComments(Report report){
+        for(Entry e:report.Entries){
+            if(e.Type == Types.CommentCount){
+                LabelFieldFactory.LabelField lf = findLabelField("Comments");
+                if(lf != null) lf.Field.setText(e.Values.get("value").toString());
+                break;
+            }
+        }
+    }
+
+    private void setNumberOfWords(Report report){
+        for(Entry e:report.Entries){
+            if(e.Type == Types.WordCount){
+                LabelFieldFactory.LabelField lf = findLabelField("Words");
+                if(lf != null) lf.Field.setText(e.Values.get("value").toString());
+                break;
+            }
+        }
+    }
+
+    private void setNumberOfMethods(Report report){
+        for(Entry e:report.Entries){
+            if(e.Type == Types.MethodCount){
+                LabelFieldFactory.LabelField lf = findLabelField("Methods");
+                if(lf != null) lf.Field.setText(e.Values.get("value").toString());
+                break;
+            }
+        }
+    }
+
 }
 
 

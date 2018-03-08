@@ -1,11 +1,11 @@
 package Core.Definitions.Java;
 
 import Core.Analyzer.Analyzer;
-import Core.Analyzer.Benchmarks.LinesBase;
+import Core.Analyzer.Benchmarks.CommentCount;
+import Core.Analyzer.Benchmarks.LinesCount;
 import Core.Analyzer.IAnalyzer;
 import Core.Analyzer.IBenchmark;
 import Core.Definitions.IDefinition;
-import Core.Definitions.Java.Benchmarks.Comment;
 import Core.Definitions.Java.Benchmarks.Cyclomatic;
 import Core.Definitions.Java.Benchmarks.Halstead;
 import Core.Definitions.SupportedLanguages;
@@ -23,10 +23,8 @@ public class Definition implements IDefinition {
 
     public IAnalyzer Analyzer() {
 
-        return new Analyzer(new IBenchmark[]{new Comment(),
-                                             new Cyclomatic(),
-                                             new Halstead(),
-                                             new LinesBase()});
+        return new Analyzer(new IBenchmark[]{new Cyclomatic(),
+                                             new Halstead()});
     }
 
     @Override

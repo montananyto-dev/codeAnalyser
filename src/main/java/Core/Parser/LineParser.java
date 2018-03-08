@@ -129,8 +129,8 @@ public abstract class LineParser {
         return cons;
     }
 
-    private static List<String> consolidatePair(List<String> words, String[] starts, String[] ends, boolean mergeWithPervious){
-        if (!mergeWithPervious) return consolidatePair(words, starts, ends);
+    private static List<String> consolidatePair(List<String> words, String[] starts, String[] ends, boolean mergeWithPrevious){
+        if (!mergeWithPrevious) return consolidatePair(words, starts, ends);
         List<String> cons = new ArrayList<>();
         for (int i = 0; i < words.size(); i++){
             String val = words.get(i);
@@ -159,6 +159,24 @@ public abstract class LineParser {
         return false;
     }
 
+    /*
+        Consolidation Profiles describe strings which can be consolidated in the event that they appear directly next to each other.
+        this is largely for the sake of quality of life so that we know when we've hit a specific delimiter, we can assume it is the unique reference
+        that delimiter's function.
+        Ex:
+            without a profile String[] would be parse as:
+                "String", "[", "]"
+            with the profile ({"["},{"]"}, true) we get:
+                "String[]"
+
+        Or in the case that a delimiter may have multiple uses.
+        EX:
+            val += x; would be parsed as:
+                "val", "+", "=", "x"
+            now since += is a unique operator from + or =, we should merge them to ensure that when we come across +, we can safely assume it references +.
+            with a profile of ({"+"},{"="}, false) we get:
+                "val", "+=", "x"
+    */
     protected class ConsolidationProfile{
         public final String[] Start;
         public final String[] End;

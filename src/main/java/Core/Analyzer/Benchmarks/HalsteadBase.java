@@ -41,7 +41,7 @@ public abstract class HalsteadBase implements IBenchmark {
         res.Values.put("Volume", _volume);
         res.Values.put("Difficulty", _difficulty);
         res.Values.put("Effort", _effort);
-        res.Values.put("Time to Code", _timeToCode);
+        res.Values.put("Time To Code", _timeToCode);
         res.Values.put("Delivered Bugs", _deliveredBugs);
         return new Entry[]{res};
     }

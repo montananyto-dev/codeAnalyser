@@ -5,6 +5,7 @@ import Core.Parser.Models.*;
 import Core.Parser.Models.Class;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class Parser implements IParser{
@@ -15,15 +16,17 @@ public abstract class Parser implements IParser{
     protected final String[] Package = setPackage();
     protected final String[] Commentline = setCommentLine();
     protected final String[] CommentBlock = setCommentBlock();
-    protected final String[] BlockScopeOpens = setScopeOpen();
-    protected final String[] BlockScopeCloses = setScopeClose();
+    protected final String[] BlockScopeOpens = setBlockScopeOpen();
+    protected final String[] BlockScopeCloses = setBlockScopeClose();
     protected final String[] ParameterScopeOpens = setParameterScopeOpens();
     protected final String[] ParameterScopeCloses = setParameterScopeCloses();
     protected final SupportedLanguages Type = setLanguageType();
-
+    protected final LineParser LineParser = setLineParser();
 
     protected int Line = 0;
     protected String[] Body;
+    protected List<String> CommentBuffer;
+
     private int _blockScopeOpen = 0;
     private int _blockScopeClose = 0;
     private int _blockscopeLevel = 0;
@@ -38,33 +41,46 @@ public abstract class Parser implements IParser{
     protected abstract String[] setPackage();
     protected abstract String[] setCommentLine();
     protected abstract String[] setCommentBlock();
-    protected abstract String[] setScopeOpen();
-    protected abstract String[] setScopeClose();
+    protected abstract String[] setBlockScopeOpen();
+    protected abstract String[] setBlockScopeClose();
     protected abstract String[] setParameterScopeOpens();
     protected abstract String[] setParameterScopeCloses();
     protected abstract SupportedLanguages setLanguageType();
-
-    protected List<String> _commentBuffer;
-
-    protected final LineParser _lineParser = setLineParser();
-
     protected abstract Core.Parser.LineParser setLineParser();
+
+    // describes how to parse a package;
+    protected abstract String parsePackage(String[] line);
+    // describes how to parse an import;
+    protected abstract String parseImport(String[] line);
+    // describes how to determine what type of File content the line represents.
+    protected abstract File.ContentTypes determineFileContent(String[] line);
+    // describes how to determine what Type of class content the line represents.
+    protected abstract Class.ContentTypes determineClassContent(String[] line);
+    // describes how to build a class.
+    protected abstract Class buildClass(String[] currentLine);
+    // describes when we we hit the end of a field;
+    protected abstract boolean shouldStopParsingField(String[] line);
+    // describes how to build a field.
+    protected abstract Field buildField(String[] line);
+    // describes how to build a parameter.
+    protected abstract Parameter buildParameter(String[] line, int i);
+    // describes how to build a method.
+    protected abstract Method buildMethod(String[] line);
 
     public File parse(String[] rawText) {
         Line = 0;
         Body = rawText;
-        _commentBuffer = new ArrayList<>();
+        CommentBuffer = new ArrayList<>();
         return parseFile();
         //stuff
     }
-
 
     private File parseFile(){
         File file = new File();
         file.Type = Type;
         file.Body(Body);
         for (; Line < Body.length; Line++){
-            String[] line = _lineParser.parse(Body[Line]);
+            String[] line = LineParser.parse(Body[Line]);
             if (line.length <= 0) continue;
             File.ContentTypes type = determineFileContent(line);
             if (type == null) continue;
@@ -73,16 +89,29 @@ public abstract class Parser implements IParser{
         return file;
     }
 
-    protected abstract void determineFileAction(File file, String[] line, File.ContentTypes type);
-
-    protected abstract File.ContentTypes determineFileContent(String[] line);
+    protected void determineFileAction(File file, String[] line, File.ContentTypes type){
+        switch (type){
+            case Import:
+                file.ExternalLibraries.add(parseImport(line));
+                break;
+            case Package:
+                file.Package = parsePackage(line);
+                break;
+            case Object:
+                file.add(parseClass(line));
+                break;
+            case Comment:
+                CommentBuffer.addAll(Arrays.asList(parseComment(line[0])));
+                break;
+        }
+    }
 
     protected Class parseClass(String[] currentLine) {
         _blockscopeLevel +=1;
         Class cl = buildClass(currentLine);
         List<String> body = new ArrayList<>();
         for (Line++; Line < Body.length; Line++){
-            String[] line = _lineParser.parse(Body[Line]);
+            String[] line = LineParser.parse(Body[Line]);
             if (line.length <= 0) continue;
             if (BlockScopeEnded()) break;
             body.add(Body[Line]);
@@ -94,11 +123,13 @@ public abstract class Parser implements IParser{
         return cl;
     }
 
-    protected abstract void determineClassAction(Class cl, String[] line, Class.ContentTypes type);
-
-    protected abstract Class.ContentTypes determineClassContent(String[] line);
-
-    protected abstract Class buildClass(String[] currentLine);
+    protected void determineClassAction(Class cl, String[] line, Class.ContentTypes type){
+        if (type == null) { return; }
+        if (type == Class.ContentTypes.Comment){ CommentBuffer.addAll(Arrays.asList(parseComment(line[0])));return; }
+        if (type == Class.ContentTypes.Method){ cl.add(parseMethod(line));return; }
+        if (type == Class.ContentTypes.Object){ cl.add(parseClass(line));return; }
+        if (type == Class.ContentTypes.Field) cl.add(parseField(line));
+    }
 
     protected Field parseField(String[] line) {
         Field field = buildField(line);
@@ -109,7 +140,7 @@ public abstract class Parser implements IParser{
         else {
             for (Line+=1; Line < Body.length; Line++) {
                 body.add(Body[Line]);
-                line = _lineParser.parse(Body[Line]);
+                line = LineParser.parse(Body[Line]);
                 if (shouldStopParsingField(line)) break;
             }
         }
@@ -117,16 +148,12 @@ public abstract class Parser implements IParser{
         return field;
     }
 
-    protected abstract boolean shouldStopParsingField(String[] line);
-
-    protected abstract Field buildField(String[] line);
-
     protected Method parseMethod(String[] line) {
         Method method = buildMethod(line);
         method.add(parseParameters(line));
         List<String> body = new ArrayList<>();
         for (Line +=1; Line < Body.length; Line++){
-            String[] current = _lineParser.parse(Body[Line]);
+            String[] current = LineParser.parse(Body[Line]);
             if (BlockScopeEnded()){break;}
             body.add(Body[Line]);
         }
@@ -153,13 +180,10 @@ public abstract class Parser implements IParser{
             }
             if (closed) break;
             Line++;
-            line = Core.Definitions.Java.LineParser.mergeGenerics(_lineParser.parse(Body[Line]));
+            line = Core.Definitions.Java.LineParser.mergeGenerics(LineParser.parse(Body[Line]));
         }
         return params.toArray(new Parameter[params.size()]);
     }
-
-    protected abstract Parameter buildParameter(String[] line, int i);
-    protected abstract Method buildMethod(String[] line);
 
     protected boolean BlockScopeEnded() {
         return _blockScopeClose != 0 && _blockScopeOpen - _blockScopeClose == _blockscopeLevel;
@@ -197,7 +221,7 @@ public abstract class Parser implements IParser{
         List<String> res = new ArrayList<>();
         do{
             res.add(Body[Line]);
-            current = _lineParser.parse(Body[Line]);
+            current = LineParser.parse(Body[Line]);
             Line++;
         }while (!Helper.contains(current, CommentBlock[1]));
         Line--;
@@ -205,8 +229,8 @@ public abstract class Parser implements IParser{
     }
 
     protected String[] getComments(){
-        String[] com = _commentBuffer.toArray(new String[_commentBuffer.size()]);
-        _commentBuffer.clear();
+        String[] com = CommentBuffer.toArray(new String[CommentBuffer.size()]);
+        CommentBuffer.clear();
         return com;
     }
 }

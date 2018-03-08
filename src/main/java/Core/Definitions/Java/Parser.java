@@ -32,10 +32,10 @@ public class Parser extends Core.Parser.Parser {
     protected String[] setCommentBlock() {
         return new String[]{"/*", "*/"};
     }
-    protected String[] setScopeOpen() {
+    protected String[] setBlockScopeOpen() {
         return new String[]{"{"};
     }
-    protected String[] setScopeClose() {
+    protected String[] setBlockScopeClose() {
         return new String[]{"}"};
     }
     protected String[] setParameterScopeOpens() {
@@ -49,31 +49,6 @@ public class Parser extends Core.Parser.Parser {
     }
     protected Core.Parser.LineParser setLineParser() {
         return new LineParser(this);
-    }
-
-    protected void determineFileAction(File file, String[] line, File.ContentTypes type) {
-        switch (type){
-            case Import:
-                file.ExternalLibraries.add(parseImport(line));
-                break;
-            case Package:
-                file.Package = parsePackage(line);
-                break;
-            case Object:
-                file.add(parseClass(line));
-                break;
-            case Comment:
-                _commentBuffer.addAll(Arrays.asList(parseComment(line[0])));
-                break;
-        }
-    }
-
-    protected void determineClassAction(Class cl, String[] line, Class.ContentTypes type) {
-        if (type == null) { return; }
-        if (type == Class.ContentTypes.Comment){ _commentBuffer.addAll(Arrays.asList(parseComment(line[0])));return; }
-        if (type == Class.ContentTypes.Method){ cl.add(parseMethod(line));return; }
-        if (type == Class.ContentTypes.Object){ cl.add(parseClass(line));return; }
-        if (type == Class.ContentTypes.Field) cl.add(parseField(line));
     }
 
     protected Class buildClass(String[] currentLine) {
@@ -114,7 +89,7 @@ public class Parser extends Core.Parser.Parser {
         return method;
     }
 
-    protected   Parameter buildParameter(String[] line, int i) {
+    protected Parameter buildParameter(String[] line, int i) {
         Parameter param = new Parameter();
         param.Type = line[i];
         param.Name(line[i + 1]);
@@ -140,11 +115,11 @@ public class Parser extends Core.Parser.Parser {
         return null;
     }
 
-    private String parseImport(String[] line){
+    protected String parseImport(String[] line){
         return line[1];
     }
 
-    private String parsePackage(String[] line){
+    protected String parsePackage(String[] line){
         return line[1];
     }
 }
