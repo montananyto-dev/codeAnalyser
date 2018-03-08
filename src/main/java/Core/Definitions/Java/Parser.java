@@ -98,10 +98,10 @@ public class Parser extends Core.Parser.Parser {
 
     protected Class.ContentTypes determineClassContent(String[] line){
         line = Helper.remove(line, Modifiers);
-        String[] reduced = LineParser.eliminateGenerics(line);
+        String[] reduced = Helper.remove(LineParser.eliminateGenerics(line), Modifiers);
         if (reduced[0].startsWith("//") || reduced[0].startsWith("/*")) return Class.ContentTypes.Comment;
-        if (Helper.contains(reduced, Objects)) return Class.ContentTypes.Object;
         if (reduced.length < 3) return null;
+        if (Helper.contains(Objects, reduced[0])) return Class.ContentTypes.Object;
         if (reduced[2].equals(";") || reduced[2].equals("=")) return Class.ContentTypes.Field;
         if (reduced[2].equals("(")) return Class.ContentTypes.Method;
         return null;
