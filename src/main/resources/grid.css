@@ -1,0 +1,16 @@
+
+.label{
+    -fx-font-size: 15px;
+    -fx-color-label-visible: true;
+    -fx-font-color: white;
+}
+
+.grid {
+    -fx-background-color: black;
+    /*-fx-background-image: url("background.jpg");*/
+}
+
+.button{
+
+    -fx-font-size:13px;
+}

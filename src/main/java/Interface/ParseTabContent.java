@@ -1,6 +1,5 @@
 package Interface;
 
-
 import Core.Analyzer.Benchmarks.Types;
 import Core.Definitions.SupportedLanguages;
 import Core.Entry;
@@ -35,14 +34,11 @@ import static java.lang.System.out;
 public class ParseTabContent extends Control {
 
     private List<LabelFieldFactory.LabelField> LabelFields = new ArrayList<>();
-
     private ProcessManager _processManager = new ProcessManager();
     private Report _report;
-    private SupportedLanguages type;
-
     private File _defaultOutputDirectory = null;
     private File _defaultInputDirectory = null;
-
+    private SupportedLanguages type;
     private TextArea textArea;
     private FileChooser fileChooser;
     private ObservableList<String> options;
@@ -50,23 +46,21 @@ public class ParseTabContent extends Control {
     private Alert alert;
     private Alert alertEmptyFile;
     private Alert alertNotSupportedFile;
-    private File workfile;
-
+    private File workFile;
     private Gui parent;
-    public GridPane Grid;
-
+    public GridPane gridParseContent;
     private Button process;
     private Button upload;
     private Button save;
     private Button clear;
 
-    String[] vals = {"Number of Words", "Number of Lines", "Number of Methods",
+    private String[] values = {"Number of Words", "Number of Lines", "Number of Methods",
                      "Number of Comments", "Cyclomatic complexity",
                      "Halstead Volume", "Halstead Difficulty", "Halstead Effort", "Halstead Time To Code", "Halstead Delivered Bugs"};
 
     public ParseTabContent(Gui parent) {
         this.parent = parent;
-        setupGrid();
+        setupGridUpload();
         setupAlert();
         setupAlertEmptyFile();
         setupAlertNotSupportedFile();
@@ -74,7 +68,7 @@ public class ParseTabContent extends Control {
         setupButtons();
         setupTextArea();
         setupTypeField();
-        out.print(Grid.isVisible());
+        out.print(gridParseContent.isVisible());
     }
 
     private void writeReportFile(Report report) {
@@ -132,40 +126,36 @@ public class ParseTabContent extends Control {
         File file = fileChooser.showOpenDialog(window);
         fileType.setValue(_processManager.determineLanguage(file).name());
         setTextArea(FileManager.read(file));
-        workfile = file;
+        workFile = file;
     }
 
     private void setDefaultOutputDirectory() {
         DirectoryChooser chooser = new DirectoryChooser();
         _defaultOutputDirectory = chooser.showDialog(parent.window);
     }
-
     // setup
-    private void setupGrid() {
-        Grid = new GridPane();
-        Grid.setHgap(10);
-        Grid.setVgap(10);
-        Grid.setPadding(new Insets(20, 20, 20, 20));
-        Grid.setAlignment(Pos.TOP_RIGHT);
-        Grid.setGridLinesVisible(true);
+    private void setupGridUpload() {
+        gridParseContent = new GridPane();
+        gridParseContent.setHgap(10);
+        gridParseContent.setVgap(10);
+        gridParseContent.setPadding(new Insets(20, 20, 20, 20));
+        gridParseContent.setAlignment(Pos.TOP_RIGHT);
+        //gridParseContent.setGridLinesVisible(true);
 
-        int[] widths = {10, 10, 10, 10, 10, 10, 25};
+        int[] widths = {10, 10, 10, 10, 10, 10, 10,10,10,10};
         for (int i : widths) {
             ColumnConstraints constraintCol = new ColumnConstraints();
             constraintCol.setPercentWidth(i);
-            Grid.getColumnConstraints().add(constraintCol);
+            gridParseContent.getColumnConstraints().add(constraintCol);
         }
 
         int[] heights = {10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10};
         for (int i : heights) {
             RowConstraints constraintRow = new RowConstraints();
             constraintRow.setPercentHeight(i);
-            Grid.getRowConstraints().add(constraintRow);
+            gridParseContent.getRowConstraints().add(constraintRow);
         }
-        Grid.getStyleClass().add("grid");
-
-        // set lines visible for columns and rows
-        // Grid.setGridLinesVisible(true);
+        gridParseContent.getStyleClass().addAll("grid","label","button");
     }
 
     private void setupAlert() {
@@ -188,17 +178,13 @@ public class ParseTabContent extends Control {
         alertNotSupportedFile.setTitle("Warning Dialog");
         alertNotSupportedFile.setHeaderText("This code is not supported");
         alertNotSupportedFile.setContentText("Please select or paste supported codes");
-
     }
 
-    // run(getTextArea(), "temp");
-    //textArea.setText("The file is empty");
     private void setupButtons() {
 
         upload = new Button();
         upload.setText("Upload File");
         upload.setOnAction(event -> {
-
             try {
                 setFileChooser(parent.window);
             } catch (IOException e) {
@@ -223,53 +209,36 @@ public class ParseTabContent extends Control {
         process.setText("Process");
         process.setOnAction(even -> {
 
-            if (workfile == null && fileType.getSelectionModel().isEmpty()) {
-
+            if (workFile == null && fileType.getSelectionModel().isEmpty()) {
                 alert.show();
-
-            } else if (workfile != null && fileType.getSelectionModel().isEmpty()) {
-
+            } else if (workFile != null && fileType.getSelectionModel().isEmpty()) {
                 alert.show();
-
-            }else if((workfile != null) && !(fileType.getSelectionModel().isEmpty()) && (textArea.getText().isEmpty())){
-
+            }else if((workFile != null) && !(fileType.getSelectionModel().isEmpty()) && (textArea.getText().isEmpty())){
                 alertEmptyFile.show();
-
-            }  else if ((workfile == null) && !(fileType.getSelectionModel().isEmpty())) {
-
-
+            }  else if ((workFile == null) && !(fileType.getSelectionModel().isEmpty())) {
                 if (textArea.getText().isEmpty()) {
-
                     alertEmptyFile.show();
-
                 }else {
-
                     run(getTextArea(), "temp");
-                    run(workfile);
+                    run(workFile);
                 }
 
-            } else if (!(textArea.getText().isEmpty()) && !(fileType.getSelectionModel().isEmpty() &&(workfile != null))) {
-
-                run(workfile);
-
+            } else if (!(textArea.getText().isEmpty()) && !(fileType.getSelectionModel().isEmpty() &&(workFile != null))) {
+                run(workFile);
             }else if(fileType.getValue().equals("NOTSUPPORTED")){
-
                 alertNotSupportedFile.show();
             }
-
         });
-
-
-        Grid.add(upload, 0, 19);
-        Grid.add(process, 3, 19);
-        Grid.add(save, 4, 19);
-        Grid.add(clear, 5, 19);
+        gridParseContent.add(upload, 0, 19);
+        gridParseContent.add(process, 3, 19);
+        gridParseContent.add(save, 4, 19);
+        gridParseContent.add(clear, 5, 19);
     }
 
     private void setupLabelFields() {
 
-        LabelFieldFactory lfFactory = new LabelFieldFactory(Grid, 6, 0, Color.WHITE);
-        for (String s : vals) {
+        LabelFieldFactory lfFactory = new LabelFieldFactory(gridParseContent, 6, 0,2,1, Color.WHITE);
+        for (String s : values) {
             LabelFields.add(lfFactory.build(s));
         }
     }
@@ -289,16 +258,15 @@ public class ParseTabContent extends Control {
             } else if (newValue.toString().equals("Visual Basic")) {
                 type = SupportedLanguages.VisualBasic;
             }
-            out.println(type.name());
         });
 
-        Grid.add(fileType, 1, 19, 2, 1);
+        gridParseContent.add(fileType, 1, 19, 2, 1);
     }
 
     private void clearTextArea(){
 
         textArea.clear();
-        workfile = null;
+        workFile = null;
 
         LabelFields.stream().forEach(item->{
             item.Field.setText("");
@@ -313,14 +281,14 @@ public class ParseTabContent extends Control {
 
         textArea.textProperty().addListener((observable, oldValue, newValue) -> {
 
-            workfile = null;
+            workFile = null;
 
             if (fileType.getValue().equals("empty")) {
                 alert.show();
             }
         });
 
-        Grid.add(textArea, 0, 0, 6, 18);
+        gridParseContent.add(textArea, 0, 0, 6, 18);
     }
 
     private void setReportValues(Report report) {

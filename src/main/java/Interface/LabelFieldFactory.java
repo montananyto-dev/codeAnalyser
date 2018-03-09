@@ -20,25 +20,28 @@ class LabelFieldFactory {
     }
 
     private GridPane _grid;
-    private int _column;
-    private int _row;
+    private int _columnIndex;
+    private int _rowIndex;
     private Color _color;
+    private int _colSpan;
+    private int _rowSpan;
 
-    public LabelFieldFactory(GridPane grid, int column, int row, Color color) {
+    public LabelFieldFactory(GridPane grid, int column, int row,int colSpan,int rowSpan, Color color) {
         _grid = grid;
-        _column = column;
-        _row = row;
+        _columnIndex = column;
+        _rowIndex = row;
         _color = color;
+        _colSpan = colSpan;
+        _rowSpan = rowSpan;
     }
 
     public LabelField build(String text) {
         Label label = new Label(text);
-        _grid.add(label, _column, _row);
+        _grid.add(label, _columnIndex, _rowIndex,_colSpan,_rowSpan);
         TextField field = new TextField();
-        _grid.add(field, _column + 1, _row);
-        _row++;
+        _grid.add(field, _columnIndex + 2, _rowIndex,_colSpan,_rowSpan);
+        _rowIndex++;
         label.setTextFill(_color);
         return new LabelField(text, label, field);
     }
-
 }
