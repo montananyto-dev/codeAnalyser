@@ -25,7 +25,7 @@ public class Gui extends Application {
         primaryStage.setTitle("Code Analyser");
         Group root = new Group();
         Scene scene = new Scene(root, 1300, 800, Color.WHITE);
-        scene.getStylesheets().addAll("grid.css");
+        scene.getStylesheets().addAll("gui.css");
 
         setupTabPane();
         setupMainPane(scene);

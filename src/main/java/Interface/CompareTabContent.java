@@ -1,6 +1,7 @@
 package Interface;
 
 import Core.Definitions.SupportedLanguages;
+import Core.FileManager.FileManager;
 import Core.ProcessManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,7 +27,8 @@ public class CompareTabContent extends Control {
     private List<LabelFieldFactory.LabelField> LabelFields = new ArrayList<>();
     private ProcessManager _processManager = new ProcessManager();
     private SupportedLanguages type;
-    private FileChooser fileChooser;
+    private FileChooser fileChooserFirstContent;
+    private FileChooser fileChooserSecondContent;
     private ObservableList<String> options;
     private ComboBox fileType;
     private Alert alert;
@@ -48,6 +50,7 @@ public class CompareTabContent extends Control {
             "Number of Comments ", "Cyclomatic complexity ",
             "Halstead Volume ", "Halstead Difficulty ", "Halstead Effort ", "Halstead Time To Code ", "Halstead Delivered Bugs "};
 
+
     public CompareTabContent(Gui parent) {
         this.parent = parent;
         setupGridCompare();
@@ -67,10 +70,37 @@ public class CompareTabContent extends Control {
         return null;
     }
 
-    public void setFileChooser(Stage window) throws IOException {
-        fileChooser = new FileChooser();
-        fileChooser.setTitle("Open Resource File");
-        File file = fileChooser.showOpenDialog(window);
+    public void setFileChooserFirstContent(Stage window) throws IOException {
+        fileChooserFirstContent = new FileChooser();
+        fileChooserFirstContent.setTitle("Open Resource File");
+        File file = fileChooserFirstContent.showOpenDialog(window);
+        fileChooserFirstContent.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("CSV FILE","*.csv"));
+        if(checkSupportedFile(file)){
+            String[] firstContent = readFile(file);
+        }else{
+            alertNotSupportedFile.show();
+        }
+    }
+
+    public void setFileChooserSecondContent(Stage window) throws IOException {
+        fileChooserSecondContent = new FileChooser();
+        fileChooserSecondContent.setTitle("Open Resource File");
+        File file = fileChooserSecondContent.showOpenDialog(window);
+        fileChooserSecondContent.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("CSV FILE","*.csv"));
+        if(checkSupportedFile(file)){
+            String[] secondContent = readFile(file);
+        }else{
+            alertNotSupportedFile.show();
+        }
+    }
+
+    public Boolean checkSupportedFile(File file){
+
+        if(file.isFile() && file.getName().contains("MyProject") ){
+            return true;
+        }else{
+            return false;
+        }
     }
     // setup
     private void setupGridCompare() {
@@ -116,8 +146,8 @@ public class CompareTabContent extends Control {
     private void setupAlertNotSupportedFile() {
         alertNotSupportedFile = new Alert(Alert.AlertType.WARNING);
         alertNotSupportedFile.setTitle("Warning Dialog");
-        alertNotSupportedFile.setHeaderText("This code is not supported");
-        alertNotSupportedFile.setContentText("Please select or paste supported codes");
+        alertNotSupportedFile.setHeaderText("Only csv file are supported");
+        alertNotSupportedFile.setContentText("Please select a csv file");
 
     }
 
@@ -127,7 +157,7 @@ public class CompareTabContent extends Control {
         uploadFirstContent.setText("Upload File 1");
         uploadFirstContent.setOnAction(event -> {
             try {
-                setFileChooser(parent.window);
+                setFileChooserFirstContent(parent.window);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -136,7 +166,7 @@ public class CompareTabContent extends Control {
         uploadSecondContent.setText("Upload File 2");
         uploadSecondContent.setOnAction(event -> {
             try {
-                setFileChooser(parent.window);
+                setFileChooserSecondContent(parent.window);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -210,4 +240,15 @@ public class CompareTabContent extends Control {
             item.Field.setText("");
         });
     }
+
+    private String[] readFile(File file) throws IOException {
+
+        String[] csvFile =  FileManager.read(file);
+
+        for (String s: csvFile){
+            System.out.println(s);
+        }
+        return csvFile;
+    }
+
 }
