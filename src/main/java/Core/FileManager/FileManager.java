@@ -26,10 +26,12 @@ public class FileManager {
     public static void write(Report report, File file) throws OutputDirectoryNotSetException, IOException {
         if (!file.isDirectory()) throw new OutputDirectoryNotSetException();
         String[] csv = CsvBuilder.build(report);
-        File out = new File(file.getAbsolutePath() + "/" + report.Name + longToString(report.Timestamp.getTime()) + ".csv");
+        System.out.println(file.getAbsolutePath());
+        File out = new File(file.getAbsolutePath() + "/" + "Project" +report.Name + longToString(report.Timestamp.getTime()) + ".csv");
         out.createNewFile();
         FileWriter writer = new FileWriter(out);
         for (String line : csv){
+            System.out.println(line);
             writer.write(line);
         }
         writer.close();
