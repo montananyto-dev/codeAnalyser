@@ -4,9 +4,10 @@ import Core.Analyzer.Benchmarks.Types;
 import Core.Definitions.SupportedLanguages;
 import Core.Entry;
 import Core.FileManager.CsvBuilder;
-import Core.FileManager.FileManager;
 import Core.ProcessManager;
 import Core.Report;
+import Interface.Controls.LabelField;
+import Interface.Controls.LabelFieldCollection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -19,22 +20,18 @@ import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.Buffer;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 
 import static java.lang.System.out;
 
 public class CompareTabContent extends Control {
 
-    private List <LabelFieldFactory.LabelField> LabelFields = new ArrayList <>();
+    private LabelFieldCollection lfCol1;
+    private LabelFieldCollection lfCol2;
     private ProcessManager _processManager = new ProcessManager();
     private SupportedLanguages type;
     private FileChooser fileChooserFirstContent;
@@ -60,13 +57,9 @@ public class CompareTabContent extends Control {
     private File defaultInputDirectoryFirstContent = null;
     private File getDefaultInputDirectorySecondContent = null;
 
-    String[] valuesFirstContent = {"Number of Words 1", "Number of Lines 1", "Number of Methods 1",
-            "Number of Comments 1", "Cyclomatic complexity 1",
-            "Halstead Volume 1", "Halstead Difficulty 1", "Halstead Effort 1", "Halstead Time To Code 1", "Halstead Delivered Bugs 1"};
-
-    String[] valuesSecondContent = {"Number of Words 2", "Number of Lines 2", "Number of Methods 2",
-            "Number of Comments 2", "Cyclomatic complexity 2",
-            "Halstead Volume 2", "Halstead Difficulty 2", "Halstead Effort 2", "Halstead Time To Code 2", "Halstead Delivered Bugs 2"};
+    String[] lfValues = {"Number of Words", "Number of Lines", "Number of Methods",
+                         "Number of Comments", "Cyclomatic complexity",
+                         "Halstead Volume", "Halstead Difficulty", "Halstead Effort", "Halstead Time To Code", "Halstead Delivered Bugs"};
 
 
     public CompareTabContent(Gui parent) {
@@ -79,13 +72,6 @@ public class CompareTabContent extends Control {
         setupLabelFieldsSecondContent();
         setupButtons();
         setupTypeField();
-    }
-
-    private LabelFieldFactory.LabelField findLabelField(String value) {
-        for (LabelFieldFactory.LabelField lf : LabelFields) {
-            if (lf.Name.contains(value)) return lf;
-        }
-        return null;
     }
 
     public void setFileChooserFirstContent(Stage window) throws Exception {
@@ -208,8 +194,8 @@ public class CompareTabContent extends Control {
         process = new Button();
         process.setText("Process");
         process.setOnAction(even -> {
-
-            setReportValues(reportSecondContent);
+            setReportValues(reportFirstContent, lfCol1);
+            setReportValues(reportSecondContent, lfCol2);
         });
         gridCompareContent.add(uploadFirstContent, 0, 19);
         gridCompareContent.add(process, 9, 18);
@@ -219,9 +205,9 @@ public class CompareTabContent extends Control {
 
     private void setupLabelFieldsFirstContent() {
 
-        LabelFieldFactory lfFactory = new LabelFieldFactory(gridCompareContent, 0, 2, 2, 1, Color.WHITE);
-        for (String s : valuesFirstContent) {
-            LabelFields.add(lfFactory.build(s));
+        lfCol1 = new LabelFieldCollection(gridCompareContent, 0, 2, 2, 1, Color.WHITE);
+        for (String s : lfValues) {
+            lfCol1.add(s);
         }
         Label fileOne = new Label();
         fileOne.setText("File 1");
@@ -231,9 +217,9 @@ public class CompareTabContent extends Control {
 
     private void setupLabelFieldsSecondContent() {
 
-        LabelFieldFactory lfFactory = new LabelFieldFactory(gridCompareContent, 5, 2, 2, 1, Color.WHITE);
-        for (String s : valuesSecondContent) {
-            LabelFields.add(lfFactory.build(s));
+        lfCol2 = new LabelFieldCollection(gridCompareContent, 5, 2, 2, 1, Color.WHITE);
+        for (String s : lfValues) {
+            lfCol2.add(s);
         }
         Label fileTwo = new Label();
         fileTwo.setText("File 2");
@@ -267,68 +253,13 @@ public class CompareTabContent extends Control {
     private void clearField() {
 
         workfile = null;
-        LabelFields.stream().forEach(item -> {
+        lfCol1.LabelFields.forEach(item -> {
+            item.Field.setText("");
+        });
+        lfCol2.LabelFields.forEach(item -> {
             item.Field.setText("");
         });
     }
-
-//    private String parseString(String line) {
-//
-//        String value = line.substring((line.lastIndexOf(",") + 1), line.lastIndexOf('"'));
-//
-//        return value;
-//    }
-//
-//    private void parseHalstead(String line){
-//
-//        String [] halstead;
-//        if(line.contains("Volume")){
-//            String volume = line.substring((line.lastIndexOf("Volume,")));
-//            System.out.println(volume);
-//        }
-//
-//        System.out.println(line);
-//
-//    }
-//
-//    private void readFile(File file) throws Exception {
-//
-//        Report report = CsvBuilder.read(file);
-//
-//
-//        try {
-//
-//            BufferedReader br = new BufferedReader(new FileReader(file.getAbsoluteFile()));
-//
-//            String sCurrentLine;
-//
-//            while ((sCurrentLine = br.readLine()) != null) {
-//
-//                if (sCurrentLine.contains("CommentCount")) {
-//                    LabelFieldFactory.LabelField lf = findLabelField("Number of Comments 1");
-//                    if (lf != null) lf.Field.setText(parseString(sCurrentLine));
-//                } else if (sCurrentLine.contains("LinesCount")) {
-//                    LabelFieldFactory.LabelField lf = findLabelField("Number of Lines 1");
-//                    if (lf != null) lf.Field.setText(parseString(sCurrentLine));
-//                } else if (sCurrentLine.contains("MethodCount")) {
-//                    LabelFieldFactory.LabelField lf = findLabelField("Number of Methods 1");
-//                    if (lf != null) lf.Field.setText(parseString(sCurrentLine));
-//                } else if (sCurrentLine.contains("WordCount")) {
-//                    LabelFieldFactory.LabelField lf = findLabelField("Number of Words 1");
-//                    if (lf != null) lf.Field.setText(parseString(sCurrentLine));
-//                }else if (sCurrentLine.contains("Cyclomatic")) {
-//                    LabelFieldFactory.LabelField lf = findLabelField("Cyclomatic complexity 1");
-//                    if (lf != null) lf.Field.setText(parseString(sCurrentLine));
-//                }else if (sCurrentLine.contains("Halstead")) {
-//
-//                    parseHalstead(sCurrentLine);
-//
-//                }
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     private void setReportFirstContent(File file) throws Exception {
 
@@ -340,39 +271,39 @@ public class CompareTabContent extends Control {
         reportSecondContent = CsvBuilder.read(file);
     }
 
-    private void setReportValues(Report report) {
-       // setCyclomaticComplexity(report);
-        //setNumberOfLines(report);
-        setHalstead(report);
-        setNumberOfComments(report);
-        setNumberOfMethods(report);
-        setNumberOfWords(report);
+    private void setReportValues(Report report, LabelFieldCollection collection) {
+        setCyclomaticComplexity(report, collection);
+        setNumberOfLines(report, collection);
+        setHalstead(report, collection);
+        setNumberOfComments(report, collection);
+        setNumberOfMethods(report, collection);
+        setNumberOfWords(report, collection);
     }
 
-    private void setCyclomaticComplexity(Report report) {
+    private void setCyclomaticComplexity(Report report, LabelFieldCollection collection) {
         int sum = 0;
         for (Entry e : report.Entries) {
             if (e.Type == Types.Cyclomatic) sum += (int) e.Values.get("value");
         }
-        LabelFieldFactory.LabelField lf = findLabelField("Cyclomatic");
+        LabelField lf = collection.find("Cyclomatic");
         if (lf != null) lf.Field.setText(Integer.toString(sum));
     }
 
-    private void setNumberOfLines(Report report) {
+    private void setNumberOfLines(Report report, LabelFieldCollection collection) {
         for (Entry e : report.Entries) {
             if (e.Type == Types.LinesCount) {
-                LabelFieldFactory.LabelField lf = findLabelField("Lines");
+                LabelField lf = collection.find("Lines");
                 if (lf != null) lf.Field.setText(e.Values.get("value").toString());
                 break;
             }
         }
     }
 
-    private void setHalstead(Report report) {
+    private void setHalstead(Report report, LabelFieldCollection collection) {
         for (Entry e : report.Entries) {
             if (e.Type == Types.Halstead) {
                 for (String key : e.Values.keySet()) {
-                    LabelFieldFactory.LabelField lf = findLabelField(key);
+                    LabelField lf = collection.find(key);
                     if (lf != null) lf.Field.setText(new DecimalFormat("0.00").format(e.Values.get(key)));
                 }
                 break;
@@ -380,30 +311,30 @@ public class CompareTabContent extends Control {
         }
     }
 
-    private void setNumberOfComments(Report report){
+    private void setNumberOfComments(Report report, LabelFieldCollection collection){
         for(Entry e:report.Entries){
             if(e.Type == Types.CommentCount){
-                LabelFieldFactory.LabelField lf = findLabelField("Comments");
+                LabelField lf = collection.find("Comments");
                 if(lf != null) lf.Field.setText(e.Values.get("value").toString());
                 break;
             }
         }
     }
 
-    private void setNumberOfWords(Report report){
+    private void setNumberOfWords(Report report, LabelFieldCollection collection){
         for(Entry e:report.Entries){
             if(e.Type == Types.WordCount){
-                LabelFieldFactory.LabelField lf = findLabelField("Words");
+                LabelField lf = collection.find("Words");
                 if(lf != null) lf.Field.setText(e.Values.get("value").toString());
                 break;
             }
         }
     }
 
-    private void setNumberOfMethods(Report report){
+    private void setNumberOfMethods(Report report, LabelFieldCollection collection){
         for(Entry e:report.Entries){
             if(e.Type == Types.MethodCount){
-                LabelFieldFactory.LabelField lf = findLabelField("Methods");
+                LabelField lf = collection.find("Methods");
                 if(lf != null) lf.Field.setText(e.Values.get("value").toString());
                 break;
             }

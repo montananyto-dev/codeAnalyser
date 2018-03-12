@@ -1,6 +1,5 @@
 package Core.Definitions.Java.Benchmarks;
 
-import Core.Definitions.Java.Definition;
 import Core.Parser.LineParser;
 
 public class Cyclomatic extends Core.Analyzer.Benchmarks.CyclomaticBase {

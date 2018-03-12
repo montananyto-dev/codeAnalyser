@@ -9,6 +9,8 @@ import Core.FileManager.Exceptions.OutputDirectoryNotSetException;
 import Core.FileManager.FileManager;
 import Core.ProcessManager;
 import Core.Report;
+import Interface.Controls.LabelField;
+import Interface.Controls.LabelFieldCollection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -33,7 +35,7 @@ import static java.lang.System.out;
 
 public class ParseTabContent extends Control {
 
-    private List<LabelFieldFactory.LabelField> LabelFields = new ArrayList<>();
+    private LabelFieldCollection LabelFields;
     private ProcessManager _processManager = new ProcessManager();
     private Report _report;
     private File _defaultOutputDirectory = null;
@@ -99,13 +101,6 @@ public class ParseTabContent extends Control {
         } catch (DefinitionNotFoundException | NotSupportedException e) {
             e.printStackTrace();
         }
-    }
-
-    private LabelFieldFactory.LabelField findLabelField(String value) {
-        for (LabelFieldFactory.LabelField lf : LabelFields) {
-            if (lf.Name.contains(value)) return lf;
-        }
-        return null;
     }
 
     private String[] getTextArea() {
@@ -237,9 +232,9 @@ public class ParseTabContent extends Control {
 
     private void setupLabelFields() {
 
-        LabelFieldFactory lfFactory = new LabelFieldFactory(gridParseContent, 6, 0,2,1, Color.WHITE);
+        LabelFields = new LabelFieldCollection(gridParseContent, 6, 0,2,1, Color.WHITE);
         for (String s : values) {
-            LabelFields.add(lfFactory.build(s));
+            LabelFields.add(s);
         }
     }
 
@@ -268,7 +263,7 @@ public class ParseTabContent extends Control {
         textArea.clear();
         workFile = null;
 
-        LabelFields.stream().forEach(item->{
+        LabelFields.LabelFields.stream().forEach(item->{
             item.Field.setText("");
         });
 
@@ -305,14 +300,14 @@ public class ParseTabContent extends Control {
         for (Entry e : report.Entries) {
             if (e.Type == Types.Cyclomatic) sum += (int) e.Values.get("value");
         }
-        LabelFieldFactory.LabelField lf = findLabelField("Cyclomatic");
+        LabelField lf = LabelFields.find("Cyclomatic");
         if (lf != null) lf.Field.setText(Integer.toString(sum));
     }
 
     private void setNumberOfLines(Report report) {
         for (Entry e : report.Entries) {
             if (e.Type == Types.LinesCount) {
-                LabelFieldFactory.LabelField lf = findLabelField("Lines");
+                LabelField lf = LabelFields.find("Lines");
                 if (lf != null) lf.Field.setText(e.Values.get("value").toString());
                 break;
             }
@@ -323,7 +318,7 @@ public class ParseTabContent extends Control {
         for (Entry e : report.Entries) {
             if (e.Type == Types.Halstead) {
                 for (String key : e.Values.keySet()) {
-                    LabelFieldFactory.LabelField lf = findLabelField(key);
+                    LabelField lf = LabelFields.find(key);
                     if (lf != null) lf.Field.setText(new DecimalFormat("0.00").format(e.Values.get(key)));
                 }
                 break;
@@ -334,7 +329,7 @@ public class ParseTabContent extends Control {
     private void setNumberOfComments(Report report){
         for(Entry e:report.Entries){
             if(e.Type == Types.CommentCount){
-                LabelFieldFactory.LabelField lf = findLabelField("Comments");
+                LabelField lf = LabelFields.find("Comments");
                 if(lf != null) lf.Field.setText(e.Values.get("value").toString());
                 break;
             }
@@ -344,7 +339,7 @@ public class ParseTabContent extends Control {
     private void setNumberOfWords(Report report){
         for(Entry e:report.Entries){
             if(e.Type == Types.WordCount){
-                LabelFieldFactory.LabelField lf = findLabelField("Words");
+                LabelField lf = LabelFields.find("Words");
                 if(lf != null) lf.Field.setText(e.Values.get("value").toString());
                 break;
             }
@@ -354,7 +349,7 @@ public class ParseTabContent extends Control {
     private void setNumberOfMethods(Report report){
         for(Entry e:report.Entries){
             if(e.Type == Types.MethodCount){
-                LabelFieldFactory.LabelField lf = findLabelField("Methods");
+                LabelField lf = LabelFields.find("Methods");
                 if(lf != null) lf.Field.setText(e.Values.get("value").toString());
                 break;
             }
