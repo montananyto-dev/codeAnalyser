@@ -1,15 +1,11 @@
 package Interface;
 
 import Core.Analyzer.Benchmarks.Types;
-import Core.Definitions.SupportedLanguages;
 import Core.Entry;
 import Core.FileManager.CsvBuilder;
-import Core.ProcessManager;
 import Core.Report;
 import Interface.Controls.LabelField;
 import Interface.Controls.LabelFieldCollection;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -23,25 +19,20 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.Arrays;
-
-
-import static java.lang.System.out;
+import java.util.ArrayList;
 
 public class CompareTabContent extends Control {
 
     private LabelFieldCollection lfCol1;
     private LabelFieldCollection lfCol2;
-    private ProcessManager _processManager = new ProcessManager();
-    private SupportedLanguages type;
     private FileChooser fileChooserFirstContent;
     private FileChooser fileChooserSecondContent;
-    private ObservableList <String> options;
-    private ComboBox fileType;
     private Alert alert;
     private Alert alertEmptyFile;
     private Alert alertNotSupportedFile;
-    private File workfile;
+    private Alert alertFileFirstContentEmpty;
+    private Alert alertFileSecondContentEmpty;
+    private Alert alterFileFirstAndSecondEmpty;
     private Gui parent;
     public GridPane gridCompareContent;
     private Button process;
@@ -52,14 +43,13 @@ public class CompareTabContent extends Control {
     private Report reportSecondContent;
 
     private File fileFirstContent;
-    private File fileSecontContent;
-
+    private File fileSecondContent;
     private File defaultInputDirectoryFirstContent = null;
-    private File getDefaultInputDirectorySecondContent = null;
+    private File defaultInputDirectorySecondContent = null;
 
     String[] lfValues = {"Number of Words", "Number of Lines", "Number of Methods",
-                         "Number of Comments", "Cyclomatic complexity",
-                         "Halstead Volume", "Halstead Difficulty", "Halstead Effort", "Halstead Time To Code", "Halstead Delivered Bugs"};
+            "Number of Comments", "Cyclomatic complexity",
+            "Halstead Volume", "Halstead Difficulty", "Halstead Effort", "Halstead Time To Code", "Halstead Delivered Bugs"};
 
 
     public CompareTabContent(Gui parent) {
@@ -68,22 +58,25 @@ public class CompareTabContent extends Control {
         setupAlert();
         setupAlertEmptyFile();
         setupAlertNotSupportedFile();
+        setupAlertFileFirstContentEmpty();
+        setupAlertFileSecondContentEmpty();
+        setupAlertFileFirstAndSecondContentEmpty();
         setupLabelFieldsFirstContent();
         setupLabelFieldsSecondContent();
         setupButtons();
-        setupTypeField();
+
     }
 
     public void setFileChooserFirstContent(Stage window) throws Exception {
 
-        if(defaultInputDirectoryFirstContent == null)
-        fileChooserFirstContent = new FileChooser();
+        if (defaultInputDirectoryFirstContent == null)
+            fileChooserFirstContent = new FileChooser();
         fileChooserFirstContent.setTitle("Open Resource File");
         File file = fileChooserFirstContent.showOpenDialog(window);
         fileChooserFirstContent.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("CSV FILE", "*.csv"));
 
         if (checkSupportedFile(file)) {
-            fileFirstContent = file;
+            this.fileFirstContent = file;
             setReportFirstContent(file);
         } else {
             alertNotSupportedFile.show();
@@ -91,14 +84,14 @@ public class CompareTabContent extends Control {
     }
 
     public void setFileChooserSecondContent(Stage window) throws Exception {
-        if(getDefaultInputDirectorySecondContent==null)
-        fileChooserSecondContent = new FileChooser();
+        if (defaultInputDirectorySecondContent == null)
+            fileChooserSecondContent = new FileChooser();
         fileChooserSecondContent.setTitle("Open Resource File");
         File file = fileChooserSecondContent.showOpenDialog(window);
         fileChooserSecondContent.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("CSV FILE", "*.csv"));
-        fileSecontContent = file;
+
         if (checkSupportedFile(file)) {
-            fileSecontContent = file;
+            this.fileSecondContent = file;
             setReportSecondContent(file);
         } else {
             alertNotSupportedFile.show();
@@ -107,7 +100,7 @@ public class CompareTabContent extends Control {
 
     public Boolean checkSupportedFile(File file) {
 
-        if (file.isFile() && file.getName().contains("Project")) {
+        if (file.isFile() && file.exists() && file.getName().contains("Project")) {
             return true;
         } else {
             return false;
@@ -162,6 +155,30 @@ public class CompareTabContent extends Control {
 
     }
 
+    private void setupAlertFileFirstContentEmpty() {
+        alertFileFirstContentEmpty = new Alert(Alert.AlertType.WARNING);
+        alertFileFirstContentEmpty.setTitle("Warning Dialog");
+        alertFileFirstContentEmpty.setHeaderText("The File 1 is not uploaded");
+        alertFileFirstContentEmpty.setContentText("Please select the file 1");
+
+    }
+
+    private void setupAlertFileSecondContentEmpty() {
+        alertFileSecondContentEmpty = new Alert(Alert.AlertType.WARNING);
+        alertFileSecondContentEmpty.setTitle("Warning Dialog");
+        alertFileSecondContentEmpty.setHeaderText("The File 2 is not uploaded");
+        alertFileSecondContentEmpty.setContentText("Please select the file 2");
+
+    }
+
+    private void setupAlertFileFirstAndSecondContentEmpty() {
+        alterFileFirstAndSecondEmpty = new Alert(Alert.AlertType.WARNING);
+        alterFileFirstAndSecondEmpty.setTitle("Warning Dialog");
+        alterFileFirstAndSecondEmpty.setHeaderText("The File 1 and the File 2 are not uploaded");
+        alterFileFirstAndSecondEmpty.setContentText("Please select the File 1 and File 2");
+
+    }
+
     private void setupButtons() {
 
         uploadFirstContent = new Button();
@@ -194,8 +211,27 @@ public class CompareTabContent extends Control {
         process = new Button();
         process.setText("Process");
         process.setOnAction(even -> {
-            setReportValues(reportFirstContent, lfCol1);
-            setReportValues(reportSecondContent, lfCol2);
+
+            if (fileFirstContent == null && fileSecondContent == null) {
+                alterFileFirstAndSecondEmpty.show();
+            } else if (fileFirstContent == null) {
+
+                alertFileFirstContentEmpty.show();
+            } else if (fileSecondContent == null) {
+
+                alertFileSecondContentEmpty.show();
+            } else if (fileFirstContent != null && fileSecondContent != null) {
+                setReportValues(reportFirstContent, lfCol1);
+                setReportValues(reportSecondContent, lfCol2);
+
+                compareNumberOfWords();
+                compareNumberOfLines();
+                compareNumberOfMethods();
+                compareNumberOfComments();
+                compareCyclomaticComplexity();
+                compareHalsted();
+
+            }
         });
         gridCompareContent.add(uploadFirstContent, 0, 19);
         gridCompareContent.add(process, 9, 18);
@@ -228,31 +264,13 @@ public class CompareTabContent extends Control {
 
     }
 
-    private void setupTypeField() {
-        options = FXCollections.observableArrayList();
-        options.addAll(Arrays.asList(_processManager.getSupportedTypeNames()));
-
-        fileType = new ComboBox(options);
-        fileType.setMinSize(25, 10);
-
-
-        fileType.valueProperty().addListener((observable, oldValue, newValue) -> {
-
-            if (newValue.toString().equals("Java")) {
-                type = SupportedLanguages.Java;
-
-            } else if (newValue.toString().equals("Visual Basic")) {
-                type = SupportedLanguages.VisualBasic;
-            }
-            out.println(type.name());
-        });
-
-        gridCompareContent.add(fileType, 9, 17, 2, 1);
-    }
-
     private void clearField() {
 
-        workfile = null;
+        fileFirstContent = null;
+        fileSecondContent = null;
+        defaultInputDirectoryFirstContent = null;
+        defaultInputDirectorySecondContent = null;
+
         lfCol1.LabelFields.forEach(item -> {
             item.Field.setText("");
         });
@@ -266,7 +284,7 @@ public class CompareTabContent extends Control {
         reportFirstContent = CsvBuilder.read(file);
     }
 
-    private void setReportSecondContent(File file) throws Exception{
+    private void setReportSecondContent(File file) throws Exception {
 
         reportSecondContent = CsvBuilder.read(file);
     }
@@ -280,65 +298,291 @@ public class CompareTabContent extends Control {
         setNumberOfWords(report, collection);
     }
 
-    private void setCyclomaticComplexity(Report report, LabelFieldCollection collection) {
-        int sum = 0;
-        for (Entry e : report.Entries) {
-            if (e.Type == Types.Cyclomatic) sum += (int) e.Values.get("value");
-        }
-        LabelField lf = collection.find("Cyclomatic");
-        if (lf != null) lf.Field.setText(Integer.toString(sum));
-    }
+    private String setNumberOfWords(Report report, LabelFieldCollection collection) {
 
-    private void setNumberOfLines(Report report, LabelFieldCollection collection) {
+        String value = "";
         for (Entry e : report.Entries) {
-            if (e.Type == Types.LinesCount) {
-                LabelField lf = collection.find("Lines");
-                if (lf != null) lf.Field.setText(e.Values.get("value").toString());
-                break;
-            }
-        }
-    }
-
-    private void setHalstead(Report report, LabelFieldCollection collection) {
-        for (Entry e : report.Entries) {
-            if (e.Type == Types.Halstead) {
-                for (String key : e.Values.keySet()) {
-                    LabelField lf = collection.find(key);
-                    if (lf != null) lf.Field.setText(new DecimalFormat("0.00").format(e.Values.get(key)));
+            if (e.Type == Types.WordCount) {
+                LabelField lf = collection.find("Words");
+                if (lf != null) {
+                    value = e.Values.get("value").toString();
+                    lf.Field.setText(value);
                 }
                 break;
             }
         }
+        return value;
     }
 
-    private void setNumberOfComments(Report report, LabelFieldCollection collection){
-        for(Entry e:report.Entries){
-            if(e.Type == Types.CommentCount){
-                LabelField lf = collection.find("Comments");
-                if(lf != null) lf.Field.setText(e.Values.get("value").toString());
+    private String setNumberOfLines(Report report, LabelFieldCollection collection) {
+
+        String value = "";
+        for (Entry e : report.Entries) {
+            if (e.Type == Types.LinesCount) {
+                LabelField lf = collection.find("Lines");
+
+                if (lf != null) {
+                    value = e.Values.get("value").toString();
+                    lf.Field.setText(value);
+                }
                 break;
             }
         }
+        return value;
     }
 
-    private void setNumberOfWords(Report report, LabelFieldCollection collection){
-        for(Entry e:report.Entries){
-            if(e.Type == Types.WordCount){
-                LabelField lf = collection.find("Words");
-                if(lf != null) lf.Field.setText(e.Values.get("value").toString());
-                break;
-            }
-        }
-    }
+    private String setNumberOfMethods(Report report, LabelFieldCollection collection) {
 
-    private void setNumberOfMethods(Report report, LabelFieldCollection collection){
-        for(Entry e:report.Entries){
-            if(e.Type == Types.MethodCount){
+        String value = "";
+        for (Entry e : report.Entries) {
+            if (e.Type == Types.MethodCount) {
                 LabelField lf = collection.find("Methods");
-                if(lf != null) lf.Field.setText(e.Values.get("value").toString());
+                if (lf != null) {
+                    value = e.Values.get("value").toString();
+                    lf.Field.setText(value);
+                }
                 break;
             }
         }
+        return value;
     }
+
+    private String setNumberOfComments(Report report, LabelFieldCollection collection) {
+
+        String value = "";
+        for (Entry e : report.Entries) {
+            if (e.Type == Types.CommentCount) {
+                LabelField lf = collection.find("Comments");
+
+                if (lf != null) {
+                    value = e.Values.get("value").toString();
+                    lf.Field.setText(value);
+                }
+                break;
+            }
+        }
+        return value;
+    }
+
+    private String setCyclomaticComplexity(Report report, LabelFieldCollection collection) {
+
+        String value = "";
+
+        int sum = 0;
+        for (Entry e : report.Entries) {
+            if (e.Type == Types.Cyclomatic) sum += (long) e.Values.get("value");
+        }
+        LabelField lf = collection.find("Cyclomatic");
+        if (lf != null) {
+            value = Long.toString(sum);
+            lf.Field.setText(Long.toString(sum));
+        }
+        return value;
+    }
+
+    private String[] setHalstead(Report report, LabelFieldCollection collection) {
+        int count = 0;
+        String[] value = new String[5];
+        for (Entry e : report.Entries) {
+            if (e.Type == Types.Halstead) {
+                for (String key : e.Values.keySet()) {
+                    LabelField lf = collection.find(key);
+                    if (lf != null) {
+                        lf.Field.setText(new DecimalFormat("0.00").format(e.Values.get(key)));
+                        value[count] = new DecimalFormat("0.00").format(e.Values.get(key));
+                        count ++;
+                    }
+                }
+                break;
+            }
+        }return value;
+    }
+
+    private void compareNumberOfWords() {
+
+        int numberOfWordsFirstContent = Integer.parseInt(setNumberOfWords(reportFirstContent, lfCol1));
+        int numberOfWordsSecondContent = Integer.parseInt(setNumberOfWords(reportSecondContent, lfCol2));
+
+        LabelField fieldOne = lfCol1.find("Words");
+        LabelField fieldTwo = lfCol2.find("Words");
+
+        if (numberOfWordsFirstContent > numberOfWordsSecondContent) {
+            setColorIfGreater(fieldOne, fieldTwo);
+        } else if (numberOfWordsFirstContent < numberOfWordsSecondContent) {
+            setColorIfSmaller(fieldOne, fieldTwo);
+        } else {
+            setColorIfEquals(fieldOne, fieldTwo);
+        }
+    }
+
+    private void compareNumberOfLines() {
+
+        int numberOfLinesFirstContent = Integer.parseInt(setNumberOfLines(reportFirstContent, lfCol1));
+        int numberOfLinesSecondContent = Integer.parseInt(setNumberOfLines(reportSecondContent, lfCol2));
+
+        LabelField fieldOne = lfCol1.find("Lines");
+        LabelField fieldTwo = lfCol2.find("Lines");
+
+        if (numberOfLinesFirstContent > numberOfLinesSecondContent) {
+            setColorIfGreater(fieldOne, fieldTwo);
+        } else if (numberOfLinesFirstContent < numberOfLinesSecondContent) {
+            setColorIfSmaller(fieldOne, fieldTwo);
+        } else if (numberOfLinesFirstContent == numberOfLinesSecondContent) {
+            setColorIfEquals(fieldOne, fieldTwo);
+        }
+    }
+
+    private void compareNumberOfComments() {
+
+        int numberOfCommentsFirstContent = Integer.parseInt(setNumberOfComments(reportFirstContent, lfCol1));
+        int numberOfCommentsSecondContent = Integer.parseInt(setNumberOfComments(reportSecondContent, lfCol2));
+
+        LabelField fieldOne = lfCol1.find("Comments");
+        LabelField fieldTwo = lfCol2.find("Comments");
+
+        if (numberOfCommentsFirstContent > numberOfCommentsSecondContent) {
+            setColorIfGreater(fieldOne, fieldTwo);
+        } else if (numberOfCommentsFirstContent < numberOfCommentsSecondContent) {
+            setColorIfSmaller(fieldOne, fieldTwo);
+        } else if (numberOfCommentsFirstContent == numberOfCommentsSecondContent) {
+            setColorIfEquals(fieldOne, fieldTwo);
+        }
+    }
+
+    private void compareNumberOfMethods() {
+
+        int numberOfMethodsFirstContent = Integer.parseInt(setNumberOfMethods(reportFirstContent, lfCol1));
+        int numberOfMethodsSecondContent = Integer.parseInt(setNumberOfMethods(reportSecondContent, lfCol2));
+
+        LabelField fieldOne = lfCol1.find("Methods");
+        LabelField fieldTwo = lfCol2.find("Methods");
+
+        if (numberOfMethodsFirstContent > numberOfMethodsSecondContent) {
+            setColorIfGreater(fieldOne, fieldTwo);
+        } else if (numberOfMethodsFirstContent < numberOfMethodsSecondContent) {
+            setColorIfSmaller(fieldOne, fieldTwo);
+        } else if (numberOfMethodsFirstContent == numberOfMethodsSecondContent) {
+            setColorIfEquals(fieldOne, fieldTwo);
+        }
+    }
+
+    private void compareCyclomaticComplexity() {
+
+        int cyclomaticFirstContent = Integer.parseInt(setNumberOfMethods(reportFirstContent, lfCol1));
+        int cyclomaticSecondContent = Integer.parseInt(setNumberOfMethods(reportSecondContent, lfCol2));
+
+        LabelField fieldOne = lfCol1.find("Cyclomatic");
+        LabelField fieldTwo = lfCol2.find("Cyclomatic");
+
+        if (cyclomaticFirstContent > cyclomaticSecondContent) {
+            setColorIfGreater(fieldOne, fieldTwo);
+        } else if (cyclomaticFirstContent < cyclomaticSecondContent) {
+            setColorIfSmaller(fieldOne, fieldTwo);
+        } else if (cyclomaticFirstContent == cyclomaticSecondContent) {
+            setColorIfEquals(fieldOne, fieldTwo);
+        }
+
+    }
+
+    private void compareHalsted() {
+
+        String[] halsteadFirstContent = setHalstead(reportFirstContent,lfCol1);
+        String[] halsteadSecondContent = setHalstead(reportSecondContent,lfCol2);
+
+        double volumeFirstContent = Double.parseDouble(halsteadFirstContent[0]);
+        double volumeSecondContent = Double.parseDouble(halsteadSecondContent[0]);
+
+        double difficultyFirstContent = Double.parseDouble(halsteadFirstContent[1]);
+        double difficultySecondContent = Double.parseDouble(halsteadSecondContent[1]);
+
+        double effortFirstContent = Double.parseDouble(halsteadFirstContent[2]);
+        double effortSecondContent = Double.parseDouble(halsteadSecondContent[2]);
+
+        double timeToCodeFirstContent = Double.parseDouble(halsteadFirstContent[3]);
+        double timeToCodeSecondContent =  Double.parseDouble(halsteadSecondContent[3]);
+
+        double deliveryBugsFirstContent = Double.parseDouble(halsteadFirstContent[4]);
+        double deliveryBugsSecondContent =  Double.parseDouble(halsteadSecondContent[4]);
+
+
+        LabelField fieldOneVolume = lfCol1.find("Halstead Volume");
+        LabelField fieldTwoVolume = lfCol2.find("Halstead Volume");
+
+        LabelField fieldOneDifficulty = lfCol1.find("Halstead Difficulty");
+        LabelField fieldTwoDifficulty =  lfCol2.find("Halstead Difficulty");
+
+        LabelField fieldOneEffort = lfCol1.find("Halstead Effort");
+        LabelField fieldTwoEffort = lfCol2.find("Halstead Effort");
+
+        LabelField fieldOneTimeToCode = lfCol1.find("Halstead Time To Code");
+        LabelField fieldTwoTimeToCode = lfCol2.find("Halstead Time To Code");
+
+        LabelField fieldOneDeliveryBugs = lfCol1.find("Halstead Delivered Bugs");
+        LabelField fieldTwoDeliveryBugs = lfCol2.find("Halstead Delivered Bugs");
+
+
+        if(volumeFirstContent > volumeSecondContent){
+            setColorIfGreater(fieldOneVolume,fieldTwoVolume);
+        }else if (volumeFirstContent < volumeSecondContent){
+            setColorIfSmaller(fieldOneVolume,fieldTwoVolume);
+        }else if (volumeFirstContent == volumeSecondContent){
+            setColorIfEquals(fieldOneVolume,fieldTwoVolume);
+        }
+
+        if(difficultyFirstContent > difficultySecondContent){
+            setColorIfGreater(fieldOneDifficulty,fieldTwoDifficulty);
+        }else if (difficultyFirstContent < difficultySecondContent){
+            setColorIfSmaller(fieldOneDifficulty,fieldTwoDifficulty);
+        }else if (difficultyFirstContent == difficultySecondContent){
+            setColorIfEquals(fieldOneDifficulty,fieldTwoDifficulty);
+        }
+
+        if(effortFirstContent > effortSecondContent){
+            setColorIfGreater(fieldOneEffort,fieldTwoEffort);
+        }else if (effortFirstContent < effortSecondContent){
+            setColorIfSmaller(fieldOneEffort,fieldTwoEffort);
+        }else if (effortFirstContent == effortSecondContent){
+            setColorIfEquals(fieldOneEffort,fieldTwoEffort);
+        }
+
+        if(timeToCodeFirstContent > timeToCodeSecondContent){
+            setColorIfGreater(fieldOneTimeToCode,fieldTwoTimeToCode);
+        }else if (timeToCodeFirstContent < timeToCodeSecondContent){
+            setColorIfSmaller(fieldOneTimeToCode,fieldTwoTimeToCode);
+        }else if (timeToCodeFirstContent == timeToCodeSecondContent){
+            setColorIfEquals(fieldOneTimeToCode,fieldTwoTimeToCode);
+        }
+
+        if(deliveryBugsFirstContent > deliveryBugsSecondContent){
+            setColorIfGreater(fieldOneDeliveryBugs,fieldTwoDeliveryBugs);
+        }else if (deliveryBugsFirstContent < deliveryBugsSecondContent){
+            setColorIfSmaller(fieldOneDeliveryBugs,fieldTwoDeliveryBugs);
+        }else if (deliveryBugsFirstContent == deliveryBugsSecondContent){
+            setColorIfEquals(fieldOneDeliveryBugs,fieldTwoDeliveryBugs);
+        }
+
+
+    }
+
+    private void setColorIfGreater(LabelField one, LabelField two) {
+
+        one.Field.setStyle("-fx-background-color: red;-fx-text-inner-color:white");
+        two.Field.setStyle("-fx-background-color:green;-fx-text-inner-color:white");
+    }
+
+    private void setColorIfSmaller(LabelField one, LabelField two) {
+
+        one.Field.setStyle("-fx-background-color: green;-fx-text-inner-color:white");
+        two.Field.setStyle("-fx-background-color:red;-fx-text-inner-color:white");
+
+    }
+
+    private void setColorIfEquals(LabelField one, LabelField two) {
+
+        one.Field.setStyle("-fx-background-color: blue;-fx-text-inner-color:white");
+        two.Field.setStyle("-fx-background-color:blue;-fx-text-inner-color:white");
+
+    }
+
 
 }
