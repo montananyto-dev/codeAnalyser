@@ -19,7 +19,6 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 
 public class CompareTabContent extends Control {
 
@@ -397,6 +396,8 @@ public class CompareTabContent extends Control {
             }
         }return value;
     }
+
+
 
     private void compareNumberOfWords() {
 

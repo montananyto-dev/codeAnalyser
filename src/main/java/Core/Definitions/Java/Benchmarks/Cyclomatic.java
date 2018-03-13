@@ -7,7 +7,7 @@ public class Cyclomatic extends Core.Analyzer.Benchmarks.CyclomaticBase {
 
     @Override
     protected String[] setKeywords() {
-        return new String[] {"if", "while", "for", "case"};
+        return new String[] {"if", "else", "while", "for", "case"};
     }
 
     @Override

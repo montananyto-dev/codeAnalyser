@@ -16,6 +16,10 @@ public class Gui extends Application {
     private BorderPane mainPane;
     public Stage window;
 
+    public static void main(String[] argc){
+        launch(argc);
+    }
+
     @Override
     public void start(Stage primaryStage) {
 
