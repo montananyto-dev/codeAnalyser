@@ -120,8 +120,13 @@ public class ParseTabContent extends Control {
         fileChooser.setTitle("Open Resource File");
         File file = fileChooser.showOpenDialog(window);
         fileType.setValue(_processManager.determineLanguage(file).name());
-        setTextArea(FileManager.read(file));
-        workFile = file;
+        if(fileType.getValue().equals(SupportedLanguages.NOTSUPPORTED.name())){
+
+            alertNotSupportedFile.show();
+        }else{
+            setTextArea(FileManager.read(file));
+            workFile = file;
+        }
     }
 
     private void setDefaultOutputDirectory() {
