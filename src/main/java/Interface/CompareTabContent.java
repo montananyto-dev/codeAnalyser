@@ -32,6 +32,7 @@ public class CompareTabContent extends Control {
     private Alert alertFileFirstContentEmpty;
     private Alert alertFileSecondContentEmpty;
     private Alert alterFileFirstAndSecondEmpty;
+    private Alert alterSameFile;
     private Gui parent;
     public GridPane gridCompareContent;
     private Button process;
@@ -60,6 +61,7 @@ public class CompareTabContent extends Control {
         setupAlertFileFirstContentEmpty();
         setupAlertFileSecondContentEmpty();
         setupAlertFileFirstAndSecondContentEmpty();
+        setupAlertFileSameFileUploaded();
         setupLabelFieldsFirstContent();
         setupLabelFieldsSecondContent();
         setupButtons();
@@ -178,6 +180,13 @@ public class CompareTabContent extends Control {
 
     }
 
+    private void setupAlertFileSameFileUploaded() {
+        alterSameFile = new Alert(Alert.AlertType.WARNING);
+        alterSameFile.setTitle("Warning Dialog");
+        alterSameFile.setHeaderText("It seems that you may have uploaded the same files");
+        alterSameFile.setContentText("Please ensure that File 1 and File 2 are not the same");
+    }
+
     private void setupButtons() {
 
         uploadFirstContent = new Button();
@@ -230,6 +239,12 @@ public class CompareTabContent extends Control {
                 compareCyclomaticComplexity();
                 compareHalsted();
 
+                if(compareNumberOfWords() && compareNumberOfLines() &&
+                        compareNumberOfMethods() && compareNumberOfComments() &&  compareCyclomaticComplexity() &&
+                        compareHalsted() ){
+                    alterSameFile.show();
+                }
+
             }
         });
         gridCompareContent.add(uploadFirstContent, 0, 19);
@@ -247,6 +262,7 @@ public class CompareTabContent extends Control {
         Label fileOne = new Label();
         fileOne.setText("File 1");
         fileOne.setTextFill(Color.WHITE);
+        fileOne.setStyle("-fx-font-size: 25");
         gridCompareContent.add(fileOne, 0, 0);
     }
 
@@ -259,6 +275,7 @@ public class CompareTabContent extends Control {
         Label fileTwo = new Label();
         fileTwo.setText("File 2");
         fileTwo.setTextFill(Color.WHITE);
+        fileTwo.setStyle("-fx-font-size: 25");
         gridCompareContent.add(fileTwo, 5, 0);
 
     }
@@ -269,12 +286,16 @@ public class CompareTabContent extends Control {
         fileSecondContent = null;
         defaultInputDirectoryFirstContent = null;
         defaultInputDirectorySecondContent = null;
+        fileChooserFirstContent = null;
+        fileChooserSecondContent = null;
 
         lfCol1.LabelFields.forEach(item -> {
             item.Field.setText("");
+            item.Field.setStyle("-fx-background-color: white");
         });
         lfCol2.LabelFields.forEach(item -> {
             item.Field.setText("");
+            item.Field.setStyle("-fx-background-color: white");
         });
     }
 
@@ -389,17 +410,16 @@ public class CompareTabContent extends Control {
                     if (lf != null) {
                         lf.Field.setText(new DecimalFormat("0.00").format(e.Values.get(key)));
                         value[count] = new DecimalFormat("0.00").format(e.Values.get(key));
-                        count ++;
+                        count++;
                     }
                 }
                 break;
             }
-        }return value;
+        }
+        return value;
     }
 
-
-
-    private void compareNumberOfWords() {
+    private Boolean compareNumberOfWords() {
 
         int numberOfWordsFirstContent = Integer.parseInt(setNumberOfWords(reportFirstContent, lfCol1));
         int numberOfWordsSecondContent = Integer.parseInt(setNumberOfWords(reportSecondContent, lfCol2));
@@ -413,10 +433,12 @@ public class CompareTabContent extends Control {
             setColorIfSmaller(fieldOne, fieldTwo);
         } else {
             setColorIfEquals(fieldOne, fieldTwo);
+            return true;
         }
+        return false;
     }
 
-    private void compareNumberOfLines() {
+    private Boolean compareNumberOfLines() {
 
         int numberOfLinesFirstContent = Integer.parseInt(setNumberOfLines(reportFirstContent, lfCol1));
         int numberOfLinesSecondContent = Integer.parseInt(setNumberOfLines(reportSecondContent, lfCol2));
@@ -430,10 +452,12 @@ public class CompareTabContent extends Control {
             setColorIfSmaller(fieldOne, fieldTwo);
         } else if (numberOfLinesFirstContent == numberOfLinesSecondContent) {
             setColorIfEquals(fieldOne, fieldTwo);
+            return true;
         }
+        return false;
     }
 
-    private void compareNumberOfComments() {
+    private Boolean compareNumberOfComments() {
 
         int numberOfCommentsFirstContent = Integer.parseInt(setNumberOfComments(reportFirstContent, lfCol1));
         int numberOfCommentsSecondContent = Integer.parseInt(setNumberOfComments(reportSecondContent, lfCol2));
@@ -447,10 +471,12 @@ public class CompareTabContent extends Control {
             setColorIfSmaller(fieldOne, fieldTwo);
         } else if (numberOfCommentsFirstContent == numberOfCommentsSecondContent) {
             setColorIfEquals(fieldOne, fieldTwo);
+            return true;
         }
+        return false;
     }
 
-    private void compareNumberOfMethods() {
+    private Boolean compareNumberOfMethods() {
 
         int numberOfMethodsFirstContent = Integer.parseInt(setNumberOfMethods(reportFirstContent, lfCol1));
         int numberOfMethodsSecondContent = Integer.parseInt(setNumberOfMethods(reportSecondContent, lfCol2));
@@ -464,10 +490,12 @@ public class CompareTabContent extends Control {
             setColorIfSmaller(fieldOne, fieldTwo);
         } else if (numberOfMethodsFirstContent == numberOfMethodsSecondContent) {
             setColorIfEquals(fieldOne, fieldTwo);
+            return true;
         }
+        return false;
     }
 
-    private void compareCyclomaticComplexity() {
+    private Boolean compareCyclomaticComplexity() {
 
         int cyclomaticFirstContent = Integer.parseInt(setNumberOfMethods(reportFirstContent, lfCol1));
         int cyclomaticSecondContent = Integer.parseInt(setNumberOfMethods(reportSecondContent, lfCol2));
@@ -481,14 +509,15 @@ public class CompareTabContent extends Control {
             setColorIfSmaller(fieldOne, fieldTwo);
         } else if (cyclomaticFirstContent == cyclomaticSecondContent) {
             setColorIfEquals(fieldOne, fieldTwo);
+            return true;
         }
-
+        return false;
     }
 
-    private void compareHalsted() {
+    private Boolean compareHalsted() {
 
-        String[] halsteadFirstContent = setHalstead(reportFirstContent,lfCol1);
-        String[] halsteadSecondContent = setHalstead(reportSecondContent,lfCol2);
+        String[] halsteadFirstContent = setHalstead(reportFirstContent, lfCol1);
+        String[] halsteadSecondContent = setHalstead(reportSecondContent, lfCol2);
 
         double volumeFirstContent = Double.parseDouble(halsteadFirstContent[0]);
         double volumeSecondContent = Double.parseDouble(halsteadSecondContent[0]);
@@ -500,17 +529,17 @@ public class CompareTabContent extends Control {
         double effortSecondContent = Double.parseDouble(halsteadSecondContent[2]);
 
         double timeToCodeFirstContent = Double.parseDouble(halsteadFirstContent[3]);
-        double timeToCodeSecondContent =  Double.parseDouble(halsteadSecondContent[3]);
+        double timeToCodeSecondContent = Double.parseDouble(halsteadSecondContent[3]);
 
         double deliveryBugsFirstContent = Double.parseDouble(halsteadFirstContent[4]);
-        double deliveryBugsSecondContent =  Double.parseDouble(halsteadSecondContent[4]);
+        double deliveryBugsSecondContent = Double.parseDouble(halsteadSecondContent[4]);
 
 
         LabelField fieldOneVolume = lfCol1.find("Halstead Volume");
         LabelField fieldTwoVolume = lfCol2.find("Halstead Volume");
 
         LabelField fieldOneDifficulty = lfCol1.find("Halstead Difficulty");
-        LabelField fieldTwoDifficulty =  lfCol2.find("Halstead Difficulty");
+        LabelField fieldTwoDifficulty = lfCol2.find("Halstead Difficulty");
 
         LabelField fieldOneEffort = lfCol1.find("Halstead Effort");
         LabelField fieldTwoEffort = lfCol2.find("Halstead Effort");
@@ -522,46 +551,56 @@ public class CompareTabContent extends Control {
         LabelField fieldTwoDeliveryBugs = lfCol2.find("Halstead Delivered Bugs");
 
 
-        if(volumeFirstContent > volumeSecondContent){
-            setColorIfGreater(fieldOneVolume,fieldTwoVolume);
-        }else if (volumeFirstContent < volumeSecondContent){
-            setColorIfSmaller(fieldOneVolume,fieldTwoVolume);
-        }else if (volumeFirstContent == volumeSecondContent){
-            setColorIfEquals(fieldOneVolume,fieldTwoVolume);
+        if (volumeFirstContent > volumeSecondContent) {
+            setColorIfGreater(fieldOneVolume, fieldTwoVolume);
+        } else if (volumeFirstContent < volumeSecondContent) {
+            setColorIfSmaller(fieldOneVolume, fieldTwoVolume);
+        } else if (volumeFirstContent == volumeSecondContent) {
+            setColorIfEquals(fieldOneVolume, fieldTwoVolume);
+
         }
 
-        if(difficultyFirstContent > difficultySecondContent){
-            setColorIfGreater(fieldOneDifficulty,fieldTwoDifficulty);
-        }else if (difficultyFirstContent < difficultySecondContent){
-            setColorIfSmaller(fieldOneDifficulty,fieldTwoDifficulty);
-        }else if (difficultyFirstContent == difficultySecondContent){
-            setColorIfEquals(fieldOneDifficulty,fieldTwoDifficulty);
+        if (difficultyFirstContent > difficultySecondContent) {
+            setColorIfGreater(fieldOneDifficulty, fieldTwoDifficulty);
+        } else if (difficultyFirstContent < difficultySecondContent) {
+            setColorIfSmaller(fieldOneDifficulty, fieldTwoDifficulty);
+        } else if (difficultyFirstContent == difficultySecondContent) {
+            setColorIfEquals(fieldOneDifficulty, fieldTwoDifficulty);
+
         }
 
-        if(effortFirstContent > effortSecondContent){
-            setColorIfGreater(fieldOneEffort,fieldTwoEffort);
-        }else if (effortFirstContent < effortSecondContent){
-            setColorIfSmaller(fieldOneEffort,fieldTwoEffort);
-        }else if (effortFirstContent == effortSecondContent){
-            setColorIfEquals(fieldOneEffort,fieldTwoEffort);
+        if (effortFirstContent > effortSecondContent) {
+            setColorIfGreater(fieldOneEffort, fieldTwoEffort);
+        } else if (effortFirstContent < effortSecondContent) {
+            setColorIfSmaller(fieldOneEffort, fieldTwoEffort);
+        } else if (effortFirstContent == effortSecondContent) {
+            setColorIfEquals(fieldOneEffort, fieldTwoEffort);
+
         }
 
-        if(timeToCodeFirstContent > timeToCodeSecondContent){
-            setColorIfGreater(fieldOneTimeToCode,fieldTwoTimeToCode);
-        }else if (timeToCodeFirstContent < timeToCodeSecondContent){
-            setColorIfSmaller(fieldOneTimeToCode,fieldTwoTimeToCode);
-        }else if (timeToCodeFirstContent == timeToCodeSecondContent){
-            setColorIfEquals(fieldOneTimeToCode,fieldTwoTimeToCode);
+        if (timeToCodeFirstContent > timeToCodeSecondContent) {
+            setColorIfGreater(fieldOneTimeToCode, fieldTwoTimeToCode);
+        } else if (timeToCodeFirstContent < timeToCodeSecondContent) {
+            setColorIfSmaller(fieldOneTimeToCode, fieldTwoTimeToCode);
+        } else if (timeToCodeFirstContent == timeToCodeSecondContent) {
+            setColorIfEquals(fieldOneTimeToCode, fieldTwoTimeToCode);
+
         }
 
-        if(deliveryBugsFirstContent > deliveryBugsSecondContent){
-            setColorIfGreater(fieldOneDeliveryBugs,fieldTwoDeliveryBugs);
-        }else if (deliveryBugsFirstContent < deliveryBugsSecondContent){
-            setColorIfSmaller(fieldOneDeliveryBugs,fieldTwoDeliveryBugs);
-        }else if (deliveryBugsFirstContent == deliveryBugsSecondContent){
-            setColorIfEquals(fieldOneDeliveryBugs,fieldTwoDeliveryBugs);
-        }
+        if (deliveryBugsFirstContent > deliveryBugsSecondContent) {
+            setColorIfGreater(fieldOneDeliveryBugs, fieldTwoDeliveryBugs);
+        } else if (deliveryBugsFirstContent < deliveryBugsSecondContent) {
+            setColorIfSmaller(fieldOneDeliveryBugs, fieldTwoDeliveryBugs);
+        } else if (deliveryBugsFirstContent == deliveryBugsSecondContent) {
+            setColorIfEquals(fieldOneDeliveryBugs, fieldTwoDeliveryBugs);
 
+        }
+        if((volumeFirstContent == volumeSecondContent)&&(difficultyFirstContent == difficultySecondContent)&&(effortFirstContent == effortSecondContent)&&
+                (timeToCodeFirstContent == timeToCodeSecondContent)&&(deliveryBugsFirstContent == deliveryBugsSecondContent)){
+            return true;
+        }else{
+            return false;
+        }
 
     }
 
@@ -584,6 +623,4 @@ public class CompareTabContent extends Control {
         two.Field.setStyle("-fx-background-color:blue;-fx-text-inner-color:white");
 
     }
-
-
 }

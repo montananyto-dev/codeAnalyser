@@ -27,9 +27,7 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import static java.lang.System.out;
 
@@ -70,7 +68,6 @@ public class ParseTabContent extends Control {
         setupButtons();
         setupTextArea();
         setupTypeField();
-        out.print(gridParseContent.isVisible());
     }
 
     private void writeReportFile(Report report) {
@@ -120,6 +117,7 @@ public class ParseTabContent extends Control {
         fileChooser.setTitle("Open Resource File");
         File file = fileChooser.showOpenDialog(window);
         fileType.setValue(_processManager.determineLanguage(file).name());
+
         if(fileType.getValue().equals(SupportedLanguages.NOTSUPPORTED.name())){
 
             alertNotSupportedFile.show();
