@@ -29,8 +29,6 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 
-import static java.lang.System.out;
-
 public class ParseTabContent extends Control {
 
     private LabelFieldCollection LabelFields;
@@ -46,6 +44,7 @@ public class ParseTabContent extends Control {
     private Alert alert;
     private Alert alertEmptyFile;
     private Alert alertNotSupportedFile;
+    private Alert alertNoReport;
     private File workFile;
     private Gui parent;
     public GridPane gridParseContent;
@@ -64,6 +63,7 @@ public class ParseTabContent extends Control {
         setupAlert();
         setupAlertEmptyFile();
         setupAlertNotSupportedFile();
+        setupAlertNoReport();
         setupLabelFields();
         setupButtons();
         setupTextArea();
@@ -178,6 +178,13 @@ public class ParseTabContent extends Control {
         alertNotSupportedFile.setContentText("Please select or paste supported codes");
     }
 
+    private void setupAlertNoReport(){
+        alertNoReport = new Alert(Alert.AlertType.WARNING);
+        alertNoReport.setTitle("Warning Dialog");
+        alertNoReport.setHeaderText("The report is not generated");
+        alertNoReport.setContentText("Please upload or copy the code and click process");
+    }
+
     private void setupButtons() {
 
         upload = new Button();
@@ -193,8 +200,12 @@ public class ParseTabContent extends Control {
         save = new Button();
         save.setText("Save Report");
         save.setOnAction(event -> {
-            if (_report != null)
+            if (_report != null){
                 writeReportFile(_report);
+            }else{
+                alertNoReport.show();
+            }
+
         });
 
         clear = new Button();
@@ -265,6 +276,8 @@ public class ParseTabContent extends Control {
 
         textArea.clear();
         workFile = null;
+        _defaultOutputDirectory = null;
+        _defaultInputDirectory = null;
 
         LabelFields.LabelFields.stream().forEach(item->{
             item.Field.setText("");
