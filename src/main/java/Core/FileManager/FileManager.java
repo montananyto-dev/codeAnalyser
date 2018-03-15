@@ -28,7 +28,7 @@ public class FileManager {
         if (!file.isDirectory()) throw new OutputDirectoryNotSetException();
         String[] csv = CsvBuilder.build(report);
         System.out.println(file.getAbsolutePath());
-        File out = new File(file.getAbsolutePath() + File.pathSeparator + "Project" +report.Name + longToString(report.Timestamp.getTime()) + ".csv");
+        File out = new File(file.getAbsolutePath() + File.separator + "Project" +report.Name + longToString(report.Timestamp.getTime()) + ".csv");
         out.createNewFile();
         FileWriter writer = new FileWriter(out);
         for (String line : csv){
