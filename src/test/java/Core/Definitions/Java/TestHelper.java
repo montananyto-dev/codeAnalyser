@@ -10,6 +10,7 @@ import Core.Report;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+// helper class which scaffolds test data.
 public class TestHelper {
 
     public static final String[] Body = {
@@ -78,6 +79,7 @@ public class TestHelper {
         Report = report;
     }
 
+    // used to generate random strings.
     public static String generateString(int length){
         String res = "";
         for (int i = 0; i < length;i++){
@@ -86,15 +88,17 @@ public class TestHelper {
         return res;
     }
 
+    // used to generically retrieve a random item from an array.
     public static  <T> T getRandomValue(T[] array){
         return array[generateRandom(0, array.length-1)];
     }
 
+    // used to generate a random integer.
     public static int generateRandom(int min, int max){
         return ThreadLocalRandom.current().nextInt(min, max+1);
     }
 
-
+    // used to build a random value entry.
     public static Entry buildEntry(){
         String[] path = new String[4];
         for (int i = 0; i < 4;i++) path[i] = generateString(4);

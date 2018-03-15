@@ -1,15 +1,13 @@
 package Core.Definitions.Java;
 
-import Core.Analyzer.Benchmarks.Types;
-import Core.Entry;
 import Core.FileManager.CsvBuilder;
-import Core.FileManager.Exceptions.FileNotValidException;
-import Core.FileManager.FileManager;
 import Core.Report;
 import org.junit.Test;
 
 public class FileManagerTest {
 
+    // tests ability to serialize and deserialize a report into CSV format.
+    // generates random entries to ensure that given undetermined inputs, we can restore the report to it's original state.
     @Test
     public void testCsvSerialization(){
         try {

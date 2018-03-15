@@ -17,6 +17,7 @@ import static java.lang.System.out;
 public class ParserTest {
 
 
+    // test the ability for the parser to generate a valid model.
     @Test
     public void testJavaParseFile(){
         Parser p = (Parser) new Definition().Parser();
@@ -26,6 +27,7 @@ public class ParserTest {
                 model.Classes.get(0).Fields.size() == 8);
     }
 
+    // tests the success of the process manager as a blackbox for Java files.
     @Test
     public void testJavaBenchmarks(){
 
@@ -39,12 +41,13 @@ public class ParserTest {
                 out.println(StringUtils.join(Arrays.asList(e.Path), ".") + ":" + e.Name + ": " + e.Type.name() + ":" + e.Values);
             }
             assert true;
+            return;
         } catch (DefinitionNotFoundException e) {
             e.printStackTrace();
         } catch (NotSupportedException e) {
             e.printStackTrace();
         }
-
+        assert false;
     }
 
 }
