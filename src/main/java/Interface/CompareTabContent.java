@@ -397,8 +397,6 @@ public class CompareTabContent extends Control {
         }return value;
     }
 
-
-
     private void compareNumberOfWords() {
 
         int numberOfWordsFirstContent = Integer.parseInt(setNumberOfWords(reportFirstContent, lfCol1));
